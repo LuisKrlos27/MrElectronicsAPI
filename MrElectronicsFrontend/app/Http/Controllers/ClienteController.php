@@ -27,7 +27,11 @@ class ClienteController extends Controller
      */
     public function create()
     {
-        return view('Clientes.ClientesForm');
+        $url = env('URL_SERVER_API') . '/clientes';
+        $response = Http::get($url);
+        $clientes = $response->json()['data'] ?? [];
+
+        return view('Clientes.ClientesForm',['clientes' => $clientes]);
     }
 
     /**
@@ -35,33 +39,57 @@ class ClienteController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $url = env('URL_SERVER_API') . '/clientes';
+
+        $request->validate([
             'nombre' => 'required|string',
             'documento' => 'required|numeric',
-            'telefono' => 'required|numeric',
+            'telefono'=>'required|numeric',
             'direccion' => 'required|string'
         ]);
 
-        $url = env('URL_SERVER_API') . '/clientes';
+        $response = Http::post($url,[
+            'nombre' => $request->nombre,
+            'documento' => $request->documento,
+            'telefono' => $request->telefono,
+            'direccion' => $request->direccion
+        ]);
 
-        Http::post($url, $validated);
+        if($response->successful()){
+            return redirect()->route('clientes.index')->with('success', 'Cliente registrado correctamente');
+        }else{
+            return redirect()->route('clientes.create')->withErrors('message', 'Error al registrar el cliente');
+        }
 
-        return redirect()->route('clientes.index')->with('success', 'Cliente registrado correctamente');
+
     }
 
     /**
      * Editar un cliente (GET /V1/clientes/{id}).
      */
-    public function edit($id)
+    public function edit(int $id)
     {
         $url = env('URL_SERVER_API') . "/clientes/{$id}";
 
         $response = Http::get($url);
 
-        $cliente = $response->json()['data'] ?? null;
+        if ($response->failed()) {
+            return redirect()->route('clientes.index')->with('error', 'No se pudo obtener la información del cliente');
+        }
+
+        $data = $response->json();
+
+        // Verifica si existe la clave 'data' y si no, usa $data directamente
+        $cliente = $data['data'] ?? $data ?? null;
+
+        if (!$cliente) {
+            return redirect()->route('clientes.index')->with('error', 'Cliente no encontrado');
+        }
 
         return view('Clientes.ClientesEdit', compact('cliente'));
     }
+
+    
 
     /**
      * Actualizar un cliente (PUT /V1/clientes/{id}).

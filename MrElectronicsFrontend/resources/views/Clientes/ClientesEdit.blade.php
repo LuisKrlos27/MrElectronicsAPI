@@ -4,7 +4,7 @@
 <div class="max-w-2xl mx-auto mt-10 bg-base-100 p-6 rounded shadow">
     <h2 class="text-2xl text-center font-bold mb-8 text-primary">EDITAR PRODUCTO</h2>
 
-    <form action="{{ route('clientes.update', $cliente->id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form action="{{ route('clientes.update', $cliente['id']) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         @csrf
         @method('PUT')
 
@@ -17,25 +17,25 @@
         <!-- Nombre -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Nombre</label>
-            <input type="text" name="nombre" class="input input-bordered w-full" value="{{ old('nombre', $cliente->nombre) }}" required>
+            <input type="text" name="nombre" class="input input-bordered w-full" value="{{$cliente['nombre'] ?? '' }}" required>
         </div>
 
         <!-- Identificacion -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Documento</label>
-            <input type="number" name="documento" class="input input-bordered w-full" value="{{ old('documento', $cliente->documento) }}" required>
+            <input type="number" name="documento" class="input input-bordered w-full" value="{{ $cliente['documento'] ?? '' }}" required>
         </div>
 
         <!-- Telefono -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Telefono</label>
-            <input type="number" name="telefono" class="input input-bordered w-full" value="{{ old('telefono', $cliente->telefono) }}" required>
+            <input type="number" name="telefono" class="input input-bordered w-full" value="{{ $cliente['telefono'] ?? '' }}" required>
         </div>
 
         <!-- Direccion -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Direccion</label>
-            <input type="text" name="direccion" class="input input-bordered w-full" value="{{ old('direccion', $cliente->direccion) }}" required>
+            <input type="text" name="direccion" class="input input-bordered w-full" value="{{ $cliente['direccion'] ?? '' }}" required>
         </div>
 
         <div class="md:col-span-2 flex justify-center gap-4 pt-4">
