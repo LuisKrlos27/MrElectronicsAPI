@@ -12,6 +12,7 @@ class ClienteController extends Controller
      */
     public function index()
     {
+        // Realizar la solicitud HTTP GET a la API
         $url = env('URL_SERVER_API') . '/clientes';
 
         $response = Http::get($url);
