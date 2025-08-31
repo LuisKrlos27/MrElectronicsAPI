@@ -25,7 +25,7 @@
         <a href="{{ route('productos.create') }}" class="font-bold btn btn-outline btn-success">REGISTRAR</a>
     </div>
 
-    @if(empty($productos) || $productos === 0)
+    @if(empty($producto) || $producto === 0)
         <p class="text-center text-gray-600">No hay productos registrados.</p>
     @else
         <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
@@ -45,7 +45,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($productos as $pro)
+                    @foreach ($producto as $pro)
                         <tr>
                             <td>{{ $pro['id'] }}</td>
                             <td>{{ $pro['tipo']['nombre'] ?? 'N/A' }}</td>

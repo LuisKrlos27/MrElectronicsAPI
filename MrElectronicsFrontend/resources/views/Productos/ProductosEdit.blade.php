@@ -4,7 +4,7 @@
 <div class="max-w-2xl mx-auto mt-10 bg-base-100 p-6 rounded shadow">
     <h2 class="text-2xl text-center font-bold mb-8 text-primary">EDITAR PRODUCTO</h2>
 
-    <form action="{{ route('productos.update', $producto->id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form action="{{ route('productos.update', $producto['id']) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         @csrf
         @method('PUT')
 
@@ -21,8 +21,8 @@
             <select name="tipo_id" class="select select-bordered w-full" required>
                 <option value="">Selecciona un tipo</option>
                 @foreach($tipo as $tip)
-                    <option value="{{ $tip->id }}" {{ $producto->tipo_id == $tip->id ? 'selected' : '' }}>
-                        {{ $tip->nombre }}
+                    <option value="{{ $tip['id'] }}" {{ $producto['tipo']['id'] == $tip['id'] ? 'selected' : '' }}>
+                        {{ $tip['nombre'] }}
                     </option>
                 @endforeach
             </select>
@@ -34,8 +34,8 @@
             <select name="pulgada_id" class="select select-bordered w-full" required>
                 <option value="">Selecciona pulgadas</option>
                 @foreach($pulgada as $pul)
-                    <option value="{{ $pul->id }}" {{ $producto->pulgada_id == $pul->id ? 'selected' : '' }}>
-                        {{ $pul->medida }}
+                    <option value="{{ $pul['id'] }}" {{ $producto['pulgada']['id'] == $pul['id'] ? 'selected' : '' }}>
+                        {{ $pul['medida'] }}
                     </option>
                 @endforeach
             </select>
@@ -47,8 +47,8 @@
             <select name="marca_id" class="select select-bordered w-full" required>
                 <option value="">-- Selecciona una marca --</option>
                 @foreach($marca as $mar)
-                    <option value="{{ $mar->id }}" {{ $producto->marca_id == $mar->id ? 'selected' : '' }}>
-                        {{ $mar->nombre }}
+                    <option value="{{ $mar['id'] }}" {{ $producto['marca']['id'] == $mar['id'] ? 'selected' : '' }}>
+                        {{ $mar['nombre'] }}
                     </option>
                 @endforeach
             </select>
@@ -60,8 +60,8 @@
             <select name="modelo_id" class="select select-bordered w-full" required>
                 <option value="">-- Selecciona un modelo --</option>
                 @foreach($modelo as $mod)
-                    <option value="{{ $mod->id }}" {{ $producto->modelo_id == $mod->id ? 'selected' : '' }}>
-                        {{ $mod->nombre }}
+                    <option value="{{ $mod['id'] }}" {{ $producto['modelo']['id'] == $mod['id'] ? 'selected' : '' }}>
+                        {{ $mod['nombre'] }}
                     </option>
                 @endforeach
             </select>
@@ -70,25 +70,25 @@
         <!-- Precio -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Precio</label>
-            <input type="number" step="0.01" name="precio" class="input input-bordered w-full" value="{{ old('precio', $producto->precio) }}" required>
+            <input type="number" step="0.01" name="precio" class="input input-bordered w-full" value="{{ old('precio', $producto['precio']) }}" required>
         </div>
 
         <!-- Cantidad -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Cantidad</label>
-            <input type="number" name="cantidad" class="input input-bordered w-full" value="{{ old('cantidad', $producto->cantidad) }}" required>
+            <input type="number" name="cantidad" class="input input-bordered w-full" value="{{ old('cantidad', $producto['cantidad']) }}" required>
         </div>
 
         <!-- Número de pieza -->
         <div>
             <label class="text-sm font-semibold text-gray-600">N° de pieza</label>
-            <input type="text" name="numero_pieza" class="input input-bordered w-full" value="{{ old('numero_pieza', $producto->numero_pieza) }}">
+            <input type="text" name="numero_pieza" class="input input-bordered w-full" value="{{ old('numero_pieza', $producto['numero_pieza']) }}">
         </div>
 
         <!-- Descripción -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Descripción</label>
-            <textarea name="descripcion" class="textarea font-semibold text-gray-600 w-full" placeholder="Descripción">{{ old('descripcion', $producto->descripcion) }}</textarea>
+            <textarea name="descripcion" class="textarea font-semibold text-gray-600 w-full" placeholder="Descripción">{{ old('descripcion', $producto['descripcion']) }}</textarea>
         </div>
 
         <div class="md:col-span-2 flex justify-center gap-4 pt-4">

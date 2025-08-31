@@ -13,7 +13,7 @@
             <select name="tipo_id" id="tipo_id" class="select select-bordered w-full" onchange="toggleNuevoTipo(this)">
                 <option value="">Selecciona un tipo</option>
                 @foreach($tipo as $tip)
-                    <option value="{{ $tip->id }}">{{ $tip->nombre }}</option>
+                    <option value="{{ $tip['id'] }}">{{ $tip['nombre'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nuevo tipo</option>
             </select>
@@ -26,7 +26,7 @@
             <select name="pulgada_id" id="pulgada_id" class="select select-bordered w-full" onchange="toggleNuevaPulgada(this)">
                 <option value="">Selecciona pulgadas</option>
                 @foreach($pulgada as $pul)
-                    <option value="{{ $pul->id }}">{{ $pul->medida }}</option>
+                    <option value="{{ $pul['id'] }}">{{ $pul['medida'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nueva pulgada</option>
             </select>
@@ -39,7 +39,7 @@
             <select name="marca_id" id="marca_id" class="select select-bordered w-full" onchange="toggleNuevaMarca(this)">
                 <option value="">Selecciona una marca</option>
                 @foreach($marca as $mar)
-                    <option value="{{ $mar->id }}">{{ $mar->nombre }}</option>
+                    <option value="{{ $mar['id'] }}">{{ $mar['nombre'] }}</option>
                 @endforeach
                 <option value="nueva">+ Agregar nueva marca</option>
             </select>
@@ -52,7 +52,7 @@
             <select name="modelo_id" id="modelo_id" class="select select-bordered w-full" onchange="toggleNuevoModelo(this)">
                 <option value="">Selecciona un modelo</option>
                 @foreach($modelo as $mod)
-                    <option value="{{ $mod->id }}">{{ $mod->nombre }}</option>
+                    <option value="{{ $mod['id'] }}">{{ $mod['nombre'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nuevo modelo</option>
             </select>
@@ -62,25 +62,25 @@
         <!-- Precio -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Precio</label>
-            <input type="number" step="0.01" name="precio" class="input input-bordered w-full" value="{{ old('precio') }}" required>
+            <input type="number" step="0.01" name="precio" class="input input-bordered w-full" required>
         </div>
 
         <!-- Cantidad -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Cantidad</label>
-            <input type="number" name="cantidad" class="input input-bordered w-full" value="{{ old('cantidad') }}" required>
+            <input type="number" name="cantidad" class="input input-bordered w-full" required>
         </div>
 
         <!-- Número de pieza -->
         <div>
             <label class="text-sm font-semibold text-gray-600">N° de pieza</label>
-            <input type="text" name="numero_pieza" class="input input-bordered w-full" value="{{ old('numero_pieza') }}">
+            <input type="text" name="numero_pieza" class="input input-bordered w-full">
         </div>
 
         <!-- Descripción -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Descripción</label>
-            <textarea name="descripcion" class="textarea font-semibold text-gray-600 w-full" placeholder="Descripción">{{ old('descripcion') }}</textarea>
+            <textarea name="descripcion" class="textarea font-semibold text-gray-600 w-full" placeholder="Descripción"></textarea>
         </div>
 
         <div class="md:col-span-2 flex justify-center gap-4 pt-4">
