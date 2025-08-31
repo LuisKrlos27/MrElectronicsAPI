@@ -25,7 +25,7 @@
         <a href="{{ route('productos.create') }}" class="font-bold btn btn-outline btn-success">REGISTRAR</a>
     </div>
 
-    @if($producto->isEmpty())
+    @if(empty($productos) || $productos === 0)
         <p class="text-center text-gray-600">No hay productos registrados.</p>
     @else
         <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
@@ -45,20 +45,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($producto as $pro)
+                    @foreach ($productos as $pro)
                         <tr>
-                            <td>{{ $pro->id }}</td>
-                            <td>{{ $pro->tipo->nombre ?? 'N/A' }}</td>
-                            <td>{{ $pro->pulgada->medida ?? 'N/A' }}</td>
-                            <td>{{ $pro->marca->nombre ?? 'N/A' }}</td>
-                            <td>{{ $pro->modelo->nombre ?? 'N/A' }}</td>
-                            <td>{{ number_format($pro->precio,0, 2) }}</td>
-                            <td>{{ $pro->cantidad }}</td>
-                            <td>{{ $pro->numero_pieza ?? 'N/A' }}</td>
-                            <td>{{ $pro->descripcion ?? 'N/A' }}</td>
+                            <td>{{ $pro['id'] }}</td>
+                            <td>{{ $pro['tipo']['nombre'] ?? 'N/A' }}</td>
+                            <td>{{ $pro['pulgada']['medida'] ?? 'N/A' }}</td>
+                            <td>{{ $pro['marca']['nombre'] ?? 'N/A' }}</td>
+                            <td>{{ $pro['modelo']['nombre'] ?? 'N/A' }}</td>
+                            <td>{{ number_format($pro['precio'],0, 2) }}</td>
+                            <td>{{ $pro['cantidad'] }}</td>
+                            <td>{{ $pro['numero_pieza'] ?? 'N/A' }}</td>
+                            <td>{{ $pro['descripcion'] ?? 'N/A' }}</td>
                             <td class="flex flex-col sm:flex-row gap-1">
-                                <a href="{{ route('productos.edit', $pro->id) }}" class="font-bold btn-sm btn btn-outline btn-warning">Editar</a>
-                                <form action="{{ route('productos.destroy', $pro->id) }}" method="POST" onsubmit="return confirm('¿Estas seguro de eliminar este producto?')">
+                                <a href="{{ route('productos.edit', $pro['id']) }}" class="font-bold btn-sm btn btn-outline btn-warning">Editar</a>
+                                <form action="{{ route('productos.destroy', $pro['id']) }}" method="POST" onsubmit="return confirm('¿Estas seguro de eliminar este producto?')">
                                     @csrf
                                     @method('DELETE')
                                     <button class="font-bold btn-sm btn btn-outline btn-error" type="submit">Eliminar</button>
