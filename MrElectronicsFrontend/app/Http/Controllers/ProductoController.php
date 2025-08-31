@@ -130,7 +130,66 @@ class ProductoController extends Controller
      */
     public function update(Request $request, $id)
     {
-        
+        // Validar los campos básicos que siempre se envían
+        $validated = $request->validate([
+            'tipo_id'      => 'nullable|integer|exists:tipos,id',
+            'marca_id'     => 'nullable|integer|exists:marcas,id',
+            'modelo_id'    => 'nullable|integer|exists:modelos,id',
+            'pulgada_id'   => 'nullable|integer|exists:pulgadas,id',
+            'numero_pieza' => 'nullable|string',
+            'descripcion'  => 'nullable|string',
+            'precio'       => 'required|numeric',
+            'cantidad'     => 'required|integer|min:0',
+            'tipo'         => 'required|string',
+            'marca'        => 'required|string',
+            'modelo'       => 'required|string',
+            'pulgada'      => 'required|string',
+        ]);
+
+        $url = env('URL_SERVER_API') . "/productos/{$id}";
+
+        try {
+            // Enviar la solicitud PUT a la API
+            $response = Http::acceptJson()->put($url, [
+                'tipo_id'      => $validated['tipo_id'] ?? null,
+                'marca_id'     => $validated['marca_id'] ?? null,
+                'modelo_id'    => $validated['modelo_id'] ?? null,
+                'pulgada_id'   => $validated['pulgada_id'] ?? null,
+                'tipo'         => $validated['tipo'],
+                'marca'        => $validated['marca'],
+                'modelo'       => $validated['modelo'],
+                'pulgada'      => $validated['pulgada'],
+                'numero_pieza' => $validated['numero_pieza'] ?? null,
+                'descripcion'  => $validated['descripcion'] ?? null,
+                'precio'       => $validated['precio'],
+                'cantidad'     => $validated['cantidad'],
+            ]);
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'No se pudo conectar con la API: ' . $e->getMessage()])
+                        ->withInput();
+        }
+
+        // Si la actualización fue exitosa
+        if ($response->successful()) {
+            $msg = $response->json()['message'] ?? 'Producto actualizado correctamente';
+            return redirect()->route('productos.index')->with('success', $msg);
+        }
+
+        // Manejo de errores de validación desde la API
+        if ($response->status() === 422) {
+            $errors = $response->json()['errors'] ?? $response->json();
+            return back()->withErrors($errors)->withInput();
+        }
+
+        // Producto no encontrado
+        if ($response->status() === 404) {
+            $msg = $response->json()['message'] ?? 'Producto no encontrado';
+            return redirect()->route('productos.index')->withErrors(['error' => $msg]);
+        }
+
+        // Otro error genérico
+        $msg = $response->json()['message'] ?? 'Error al actualizar el producto';
+        return back()->withErrors(['error' => $msg])->withInput();
     }
 
     /**

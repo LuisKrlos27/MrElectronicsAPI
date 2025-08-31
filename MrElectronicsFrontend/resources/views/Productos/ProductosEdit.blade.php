@@ -15,6 +15,12 @@
             </div>
         @endif
 
+        <!-- Hidden inputs con nombres para el backend -->
+        <input type="hidden" name="tipo" value="{{ $producto['tipo']['nombre'] }}">
+        <input type="hidden" name="marca" value="{{ $producto['marca']['nombre'] }}">
+        <input type="hidden" name="modelo" value="{{ $producto['modelo']['nombre'] }}">
+        <input type="hidden" name="pulgada" value="{{ $producto['pulgada']['medida'] }}">
+
         <!-- Tipo -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Tipo</label>
