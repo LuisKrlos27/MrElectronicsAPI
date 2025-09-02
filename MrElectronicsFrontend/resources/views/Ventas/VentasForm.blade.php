@@ -13,7 +13,7 @@
             <select name="cliente_id" id="cliente_id" class="select select-bordered w-full" onchange="toggleNuevoCliente(this)">
                 <option value="">Selecciona un cliente</option>
                 @foreach($cliente as $cli)
-                    <option value="{{ $cli->id }}">{{ $cli->nombre }}</option>
+                    <option value="{{ $cli['id'] }}">{{ $cli['nombre'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nuevo cliente</option>
             </select>
@@ -47,14 +47,14 @@
                     <select name="productos[0][producto_id]" class="select select-bordered w-full producto_select" required>
                         <option value="">Selecciona un producto</option>
                         @foreach($producto as $pro)
-                            <option value="{{ $pro->id }}" data-precio="{{ $pro->precio }}">
-                                {{ $pro->tipo->nombre }} - {{ $pro->marca->nombre }} - {{ $pro->modelo->nombre }} (Stock: {{ $pro->cantidad }})
+                            <option value="{{ $pro['id'] }}" data-precio="{{ $pro['precio'] }}">
+                                {{ $pro['tipo']['nombre'] }} - {{ $pro['marca']['nombre'] }} - {{ $pro['modelo']['nombre'] }} (Stock: {{ $pro['cantidad'] }})
                             </option>
                         @endforeach
                     </select>
                     <input type="number" name="productos[0][cantidad]" min="1" class="input input-bordered w-full cantidad_input" placeholder="Cantidad" required>
-                    <input type="text" name="productos[0][precio_unitario]" class="input input-bordered w-full precio_input" placeholder="Precio unitario" disabled required>
-                    <input type="text" name="productos[0][subtotal]" class="input input-bordered w-full subtotal_input" placeholder="Subtotal" disabled>
+                    <input type="text" class="input input-bordered w-full precio_input" placeholder="Precio unitario" disabled data-raw="0">
+                    <input type="text" class="input input-bordered w-full subtotal_input" placeholder="Subtotal" disabled data-raw="0">
                 </div>
             </div>
 
@@ -76,7 +76,7 @@
         <!-- Total -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Total</label>
-            <input type="text" class="input input-bordered w-full" id="total_input" disabled>
+            <input type="text" class="input input-bordered w-full" id="total_input" disabled data-raw="0">
         </div>
 
         <!-- Cambio -->
@@ -100,12 +100,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const pagoInput = document.getElementById('pago_input');
     const cambioInput = document.getElementById('cambio_input');
 
-    // Función para formatear número como moneda venezolana
     function formatoMoneda(num) {
         return '$' + num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // Calcular total de la venta
     function recalcularTotal() {
         let total = 0;
         container.querySelectorAll('.subtotal_input').forEach(input => {
@@ -113,11 +111,10 @@ document.addEventListener('DOMContentLoaded', function () {
             total += valor;
         });
         totalInput.value = formatoMoneda(total);
-        totalInput.dataset.raw = total; // Guardamos valor sin formato
+        totalInput.dataset.raw = total;
         recalcularCambio();
     }
 
-    // Calcular cambio sin valores negativos
     function recalcularCambio() {
         const pago = parseFloat(pagoInput.value) || 0;
         const total = parseFloat(totalInput.dataset.raw) || 0;
@@ -126,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function () {
         cambioInput.value = formatoMoneda(cambio);
     }
 
-    // Asignar eventos a una fila de producto
     function bindEvents(row) {
         const selectProducto = row.querySelector('.producto_select');
         const cantidadInput = row.querySelector('.cantidad_input');
@@ -153,10 +149,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Vinculamos la primera fila de producto
     bindEvents(container.querySelector('.producto_item'));
 
-    // Botón para agregar nuevo producto
     document.getElementById('add_producto').addEventListener('click', function () {
         const newRow = document.createElement('div');
         newRow.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4', 'producto_item');
@@ -164,8 +158,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <select name="productos[${index}][producto_id]" class="select select-bordered w-full producto_select" required>
                 <option value="">Selecciona un producto</option>
                 @foreach($producto as $pro)
-                    <option value="{{ $pro->id }}" data-precio="{{ $pro->precio }}">
-                        {{ $pro->tipo->nombre }} - {{ $pro->marca->nombre }} - {{ $pro->modelo->nombre }} (Stock: {{ $pro->cantidad }})
+                    <option value="{{ $pro['id'] }}" data-precio="{{ $pro['precio'] }}">
+                        {{ $pro['tipo']['nombre'] }} - {{ $pro['marca']['nombre'] }} - {{ $pro['modelo']['nombre'] }} (Stock: {{ $pro['cantidad'] }})
                     </option>
                 @endforeach
             </select>
@@ -178,11 +172,9 @@ document.addEventListener('DOMContentLoaded', function () {
         index++;
     });
 
-    // Evento para recalcular cambio cuando se ingresa el pago
     pagoInput.addEventListener('input', recalcularCambio);
 });
 
-// Mostrar/ocultar campos de nuevo cliente
 function toggleNuevoCliente(select) {
     const fields = document.getElementById('nuevo_cliente_fields');
     fields.classList.toggle('hidden', select.value !== 'nuevo');
