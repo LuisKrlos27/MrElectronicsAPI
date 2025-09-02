@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Http;
 
 class VentaController extends Controller
 {
@@ -15,10 +16,13 @@ class VentaController extends Controller
      */
     public function index()
     {
-        $venta = Venta::all();
-        $cliente = Cliente::all();
+        $url = env('URL_SERVER_API') . '/ventas';
 
-        return view('Ventas.VentasIndex', compact('venta','cliente'));
+        $response = Http::get($url);
+
+        $venta = $response->json()['data'] ?? [];
+
+        return view('Ventas.VentasIndex', compact('venta'));
     }
 
     public function factura(Venta $venta)

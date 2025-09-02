@@ -25,7 +25,7 @@
         <a href="{{ route('ventas.create') }}" class="font-bold btn btn-outline btn-success">REGISTRAR</a>
     </div>
 
-    @if($venta->isEmpty())
+    @if(empty($venta) || $venta === 0)
         <p class="text-center text-gray-600">No hay ventas registradas.</p>
     @else
         <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
@@ -43,16 +43,16 @@
                 <tbody>
                     @foreach ($venta as $ven)
                         <tr>
-                            <td>{{ $ven->id }}</td>
-                            <td>{{ $ven->cliente->nombre ?? 'N/A' }}</td>
-                            <td>{{ $ven->fecha_venta->format('Y-m-d') ?? 'N/A' }}</td>
-                            <td>${{ number_format($ven->pago,0,2) }}</td>
-                            <td>${{ number_format($ven->total,0,2) }}</td>
+                            <td>{{ $ven['id'] }}</td>
+                            <td>{{ $ven['cliente']['nombre'] ?? 'N/A' }}</td>
+                            <td>{{ \Carbon\Carbon::parse($ven['fecha_venta'])->format('Y-m-d') ?? 'N/A' }}</td>
+                            <td>${{ number_format((float)$ven['pago'],2) }}</td>
+                            <td>${{ number_format((float)$ven['total'],2) }}</td>
                             <td class="flex flex-col sm:flex-row gap-1">
-                                <a href="{{ route('ventas.show', $ven->id) }}" class="font-bold btn-sm btn btn-outline btn-info">Ver factura</a>
-                                <a href="{{ route('ventas.factura', $ven->id) }}" class="font-bold btn-sm btn btn-outline btn-primary">Imprimir</a>
-                                <a href="{{ route('ventas.edit', $ven->id) }}" class="font-bold btn-sm btn btn-outline btn-warning">Editar</a>
-                                {{-- <form action="{{ route('ventas.destroy', $ven->id) }}" method="POST" onsubmit="return confirm('¿Estas seguro de eliminar este producto?')">
+                                <a href="{{ route('ventas.show', $ven['id']) }}" class="font-bold btn-sm btn btn-outline btn-info">Ver factura</a>
+                                <a href="{{ route('ventas.factura', $ven['id']) }}" class="font-bold btn-sm btn btn-outline btn-primary">Imprimir</a>
+                                <a href="{{ route('ventas.edit', $ven['id']) }}" class="font-bold btn-sm btn btn-outline btn-warning">Editar</a>
+                                {{-- <form action="{{ route('ventas.destroy', $ven['id']) }}" method="POST" onsubmit="return confirm('¿Estas seguro de eliminar este producto?')">
                                     @csrf
                                     @method('DELETE')
                                     <button class="font-bold btn-sm btn btn-outline btn-error" type="submit">Eliminar</button>

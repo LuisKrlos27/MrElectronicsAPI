@@ -22,6 +22,6 @@ Route::apiResource('V1/tipos', TipoController::class);
 Route::apiResource('V1/marcas', MarcaController::class);
 Route::apiResource('V1/modelos', ModeloController::class);
 Route::apiResource('V1/pulgadas', PulgadaController::class);
-Route::apiResource('V1/Ventas', VentaController::class);
+Route::apiResource('V1/ventas', VentaController::class);
 
 
