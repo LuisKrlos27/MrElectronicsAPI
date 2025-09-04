@@ -115,12 +115,30 @@ class VentaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Venta $venta)
+    public function edit(int $id)
     {
-        $producto = Producto::all();
-        $cliente = Cliente::all();
 
-        return view('Ventas.VentasEdit', compact('producto','venta','cliente'));
+        $url = env('URL_SERVER_API');
+
+        //Obtener el producto
+        $response = Http::get("{$url}/ventas/{$id}");
+
+        if ($response->failed()) {
+            return redirect()->route('ventas.index')
+                ->with('error', 'No se pudo obtener la información de la venta');
+        }
+        // Extraer los datos correctamente
+        $data = $response->json();
+        $venta = $data['data'] ?? $data ?? null;
+
+        //obtener lista de clientes y productos
+        $clienteResponse = Http::get("{$url}/clientes");
+        $productoResponse = Http::get("{$url}/productos");
+
+        $cliente = $clienteResponse->json()['data'] ?? [];
+        $producto = $productoResponse->json()['data'] ?? [];
+
+        return view('Ventas.VentasEdit', compact('venta', 'cliente', 'producto'));
 
     }
 
