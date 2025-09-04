@@ -31,7 +31,6 @@ class VentaResource extends JsonResource
             'productos' => $this->productos->map(function ($producto) {
                 return [
                     'id' => $producto->id,
-                    'nombre' => $producto->nombre ?? null,
                     'tipo' => $producto->tipo->nombre ?? null,
                     'marca' => $producto->marca->nombre ?? null,
                     'modelo' => $producto->modelo->nombre ?? null,

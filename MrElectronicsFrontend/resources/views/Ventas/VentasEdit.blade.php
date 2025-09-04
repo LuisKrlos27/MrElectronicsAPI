@@ -4,7 +4,7 @@
 <div class="max-w-3xl mx-auto mt-10 bg-base-100 p-6 rounded shadow">
     <h2 class="text-2xl text-center font-bold mb-8 text-primary">EDITAR VENTA</h2>
 
-    <form action="{{ route('ventas.update', $venta->id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form action="{{ route('ventas.update', $venta['id']) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         @csrf
         @method('PUT')
 
@@ -21,8 +21,8 @@
             <select name="cliente_id" id="cliente_id" class="select select-bordered w-full">
                 <option value="">Selecciona un cliente</option>
                 @foreach($cliente as $cli)
-                    <option value="{{ $cli->id }}" {{ $venta->cliente_id == $cli->id ? 'selected' : '' }}>
-                        {{ $cli->nombre }}
+                    <option value="{{ $cli['id'] }}" {{ $venta['cliente']['id'] == $cli['id'] ? 'selected' : '' }}>
+                        {{ $cli['nombre'] }}
                     </option>
                 @endforeach
             </select>
@@ -32,23 +32,23 @@
         <div class="md:col-span-2">
             <label class="text-sm font-semibold text-gray-600">Productos</label>
             <div id="productos_container" class="space-y-4">
-                @foreach($venta->detalles as $i => $detalle)
+                @foreach($venta['detalles'] ?? [] as $i => $detalle)
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 producto_item">
                         <select name="productos[{{ $i }}][producto_id]" class="select select-bordered w-full producto_select" required>
                             <option value="">Selecciona un producto</option>
                             @foreach($producto as $pro)
-                                <option value="{{ $pro->id }}" data-precio="{{ $pro->precio }}"
-                                    {{ $detalle->producto_id == $pro->id ? 'selected' : '' }}>
-                                    {{ $pro->tipo->nombre }} - {{ $pro->marca->nombre }} - {{ $pro->modelo->nombre }} (Stock: {{ $pro->cantidad }})
+                                <option value="{{ $pro['id'] }}" data-precio="{{ $pro['precio'] }}"
+                                    {{ $detalle['producto_id'] == $pro['id'] ? 'selected' : '' }}>
+                                    {{ $pro['tipo']['nombre'] }} - {{ $pro['marca']['nombre'] }} - {{ $pro['modelo']['nombre'] }} (Stock: {{ $pro['cantidad'] }})
                                 </option>
                             @endforeach
                         </select>
                         <input type="number" name="productos[{{ $i }}][cantidad]" min="1" class="input input-bordered w-full cantidad_input"
-                            value="{{ $detalle->cantidad }}" required>
+                            value="{{ $detalle['cantidad'] }}" required>
                         <input type="text" class="input input-bordered w-full precio_input"
-                            value="{{ number_format($detalle->precio_unitario, 2) }}" disabled data-raw="{{ $detalle->precio_unitario }}">
+                            value="{{ number_format($detalle['precio_unitario'], 2) }}" disabled data-raw="{{ $detalle['precio_unitario'] }}">
                         <input type="text" class="input input-bordered w-full subtotal_input"
-                            value="{{ number_format($detalle->subtotal, 2) }}" disabled data-raw="{{ $detalle->subtotal }}">
+                            value="{{ number_format($detalle['subtotal'], 2) }}" disabled data-raw="{{ $detalle['subtotal'] }}">
                     </div>
                 @endforeach
             </div>
@@ -60,29 +60,28 @@
         <div>
             <label class="text-sm font-semibold text-gray-600">Fecha</label>
             <input type="date" name="fecha_venta" class="input input-bordered w-full"
-                value="{{ old('fecha_venta', \Carbon\Carbon::parse($venta->fecha_venta)->format('Y-m-d')) }}" required>
+                value="{{ old('fecha_venta', \Carbon\Carbon::parse($venta['fecha_venta'])->format('Y-m-d')) }}" required>
         </div>
-
 
         <!-- Pago -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Pago</label>
             <input type="number" step="0.01" name="pago" class="input input-bordered w-full"
-                id="pago_input" value="{{ old('pago', $venta->pago) }}" required>
+                id="pago_input" value="{{ old('pago', $venta['pago']) }}" required>
         </div>
 
         <!-- Total -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Total</label>
             <input type="text" class="input input-bordered w-full" id="total_input"
-                value="${{ number_format($venta->total, 2) }}" disabled data-raw="{{ $venta->total }}">
+                value="${{ number_format($venta['total'], 2) }}" disabled data-raw="{{ $venta['total'] }}">
         </div>
 
         <!-- Cambio -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Cambio</label>
             <input type="text" class="input input-bordered w-full" id="cambio_input"
-                value="${{ number_format($venta->cambio, 2) }}" disabled>
+                value="${{ number_format($venta['cambio'], 2) }}" disabled>
         </div>
 
         <div class="md:col-span-2 flex justify-center gap-4 pt-4">
@@ -95,7 +94,7 @@
 {{-- Scripts para cálculos --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    let index = {{ count($venta->detalles) }};
+    let index = {{ count($venta['detalles'] ?? []) }};
     const container = document.getElementById('productos_container');
     const totalInput = document.getElementById('total_input');
     const pagoInput = document.getElementById('pago_input');
@@ -159,8 +158,8 @@ document.addEventListener('DOMContentLoaded', function () {
             <select name="productos[${index}][producto_id]" class="select select-bordered w-full producto_select" required>
                 <option value="">Selecciona un producto</option>
                 @foreach($producto as $pro)
-                    <option value="{{ $pro->id }}" data-precio="{{ $pro->precio }}">
-                        {{ $pro->tipo->nombre }} - {{ $pro->marca->nombre }} - {{ $pro->modelo->nombre }} (Stock: {{ $pro->cantidad }})
+                    <option value="{{ $pro['id'] }}" data-precio="{{ $pro['precio'] }}">
+                        {{ $pro['tipo']['nombre'] }} - {{ $pro['marca']['nombre'] }} - {{ $pro['modelo']['nombre'] }} (Stock: {{ $pro['cantidad'] }})
                     </option>
                 @endforeach
             </select>

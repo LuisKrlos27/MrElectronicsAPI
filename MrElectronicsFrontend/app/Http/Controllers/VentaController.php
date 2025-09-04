@@ -30,6 +30,7 @@ class VentaController extends Controller
         $venta->load(['cliente', 'detalles.producto']);
         $pdf = Pdf::loadView('Ventas.VentasShow', compact('venta'));
         return $pdf->download('FACVENT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT) . '.pdf');
+
     }
 
     /**
@@ -120,18 +121,32 @@ class VentaController extends Controller
 
         $url = env('URL_SERVER_API');
 
-        //Obtener el producto
+        // Obtener la venta
         $response = Http::get("{$url}/ventas/{$id}");
 
         if ($response->failed()) {
             return redirect()->route('ventas.index')
                 ->with('error', 'No se pudo obtener la información de la venta');
         }
+
         // Extraer los datos correctamente
         $data = $response->json();
-        $venta = $data['data'] ?? $data ?? null;
+        $venta = $data['data'] ?? $data;
 
-        //obtener lista de clientes y productos
+        // Convertir la estructura de productos a detalles para la vista
+        if (isset($venta['productos'])) {
+            $venta['detalles'] = array_map(function ($producto) {
+                return [
+                    'producto_id' => $producto['id'],
+                    'cantidad' => $producto['cantidad'],
+                    'precio_unitario' => $producto['precio_unitario'],
+                    'subtotal' => $producto['subtotal'],
+                    'producto' => $producto // Mantener toda la info del producto
+                ];
+            }, $venta['productos']);
+        }
+
+        // Obtener lista de clientes y productos
         $clienteResponse = Http::get("{$url}/clientes");
         $productoResponse = Http::get("{$url}/productos");
 
@@ -145,87 +160,60 @@ class VentaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Venta $venta)
+    public function update(Request $request, int $id)
     {
-        // 1. Validar datos básicos
-        $request->validate([
-            'cliente_id' => 'required',
-            'fecha_venta' => 'required|date',
-            'pago' => 'required|numeric|min:0',
-            'productos' => 'required|array|min:1',
-            'productos.*.producto_id' => 'required|exists:productos,id',
-            'productos.*.cantidad' => 'required|numeric|min:1',
-        ]);
+        $url = env('URL_SERVER_API') . "/ventas/{$id}";
 
-        // 2. Crear nuevo cliente si se seleccionó "nuevo"
-        if ($request->cliente_id === 'nuevo') {
-            $request->validate([
-                'nuevo_cliente_nombre' => 'required|string|max:255',
-                'nuevo_cliente_documento' => 'required|string|max:50',
-                'nuevo_cliente_telefono' => 'nullable|string|max:50',
-                'nuevo_cliente_direccion' => 'nullable|string|max:255',
-            ]);
+        try {
+            // 1. Si el cliente es "nuevo", crearlo primero
+            if ($request->cliente_id === 'nuevo') {
+                $clienteResponse = Http::post(env('URL_SERVER_API') . '/clientes', [
+                    'nombre'    => $request->nuevo_cliente_nombre,
+                    'documento' => $request->nuevo_cliente_documento,
+                    'telefono'  => $request->nuevo_cliente_telefono,
+                    'direccion' => $request->nuevo_cliente_direccion,
+                ]);
 
-            $cliente = Cliente::create([
-                'nombre' => $request->nuevo_cliente_nombre,
-                'documento' => $request->nuevo_cliente_documento,
-                'telefono' => $request->nuevo_cliente_telefono,
-                'direccion' => $request->nuevo_cliente_direccion,
-            ]);
-            $cliente_id = $cliente->id;
-        } else {
-            $cliente_id = $request->cliente_id;
+                if (!$clienteResponse->successful()) {
+                    return back()->withErrors(['error' => 'No se pudo registrar el nuevo cliente.']);
+                }
+
+                $cliente_id = $clienteResponse->json()['data']['id'];
+            } else {
+                $cliente_id = $request->cliente_id;
+            }
+
+            // 2. Preparar datos para la venta
+            $ventaData = [
+                'cliente_id' => $cliente_id,
+                'fecha_venta' => $request->fecha_venta,
+                'pago'       => $request->pago,
+                'productos'  => $request->productos,
+            ];
+
+            // 3. Si hay cliente nuevo, agregar los datos adicionales
+            if ($request->cliente_id === 'nuevo') {
+                $ventaData['nuevo_cliente_nombre'] = $request->nuevo_cliente_nombre;
+                $ventaData['nuevo_cliente_documento'] = $request->nuevo_cliente_documento;
+                $ventaData['nuevo_cliente_telefono'] = $request->nuevo_cliente_telefono;
+                $ventaData['nuevo_cliente_direccion'] = $request->nuevo_cliente_direccion;
+            }
+
+            // 4. Hacer la petición PUT a la API
+            $response = Http::put($url, $ventaData);
+
+            if ($response->successful()) {
+                return redirect()->route('ventas.index')
+                    ->with('success', 'Venta actualizada correctamente');
+            }
+
+            // Manejar errores de la API
+            $errorData = $response->json();
+            return back()->withErrors(['error' => $errorData['message'] ?? 'Error al actualizar la venta']);
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al conectar con el servidor: ' . $e->getMessage()]);
         }
-
-        // 3. Revertir stock de los productos anteriores
-        foreach ($venta->detalles as $detalle) {
-            $producto = Producto::findOrFail($detalle->producto_id);
-            $producto->cantidad += $detalle->cantidad; // devolver stock
-            $producto->save();
-        }
-
-        // 4. Eliminar detalles antiguos
-        $venta->detalles()->delete();
-
-        // 5. Calcular nuevo total y cambio
-        $total = 0;
-        foreach ($request->productos as $item) {
-            $producto = Producto::findOrFail($item['producto_id']);
-            $subtotal = $producto->precio * $item['cantidad'];
-            $total += $subtotal;
-        }
-
-        $pago = $request->pago;
-        $cambio = max($pago - $total, 0);
-
-        // 6. Actualizar venta
-        $venta->update([
-            'cliente_id' => $cliente_id,
-            'fecha_venta' => $request->fecha_venta,
-            'total' => $total,
-            'pago' => $pago,
-            'cambio' => $cambio,
-        ]);
-
-        // 7. Crear los nuevos detalles y actualizar stock
-        foreach ($request->productos as $item) {
-            $producto = Producto::findOrFail($item['producto_id']);
-            $subtotal = $producto->precio * $item['cantidad'];
-
-            // Crear detalle
-            $venta->detalles()->create([
-                'producto_id' => $producto->id,
-                'cantidad' => $item['cantidad'],
-                'precio_unitario' => $producto->precio,
-                'subtotal' => $subtotal,
-            ]);
-
-            // Actualizar stock
-            $producto->cantidad -= $item['cantidad'];
-            $producto->save();
-        }
-
-        return redirect()->route('ventas.index')->with('success', 'Venta actualizada correctamente');
     }
 
 

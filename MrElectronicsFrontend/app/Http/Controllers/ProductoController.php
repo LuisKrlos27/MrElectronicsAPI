@@ -128,7 +128,7 @@ class ProductoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         // Validar los campos básicos que siempre se envían
         $validated = $request->validate([
