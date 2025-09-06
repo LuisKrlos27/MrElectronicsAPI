@@ -28,7 +28,7 @@
     @if(empty($venta) || $venta === 0)
         <p class="text-center text-gray-600">No hay ventas registradas.</p>
     @else
-        <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
+        <div class="overflow-x-auto overflow-y-auto rounded-box border border-base-content/5 bg-base-100" style="max-height: 500px;">
             <table class="table">
                 <thead>
                     <tr>

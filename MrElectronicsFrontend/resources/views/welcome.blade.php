@@ -20,6 +20,7 @@
                 <li><a href="{{ route('productos.index') }}">Inventario</a></li>
                 <li><a href="{{ route('ventas.index') }}">Ventas</a></li>
                 <li><a href="{{ route('clientes.index') }}">Ventas</a></li>
+                <li><a href="{{ route('clientes.index') }}">Clientes</a></li>
                 <li><a href="{{ route('procesos.index') }}">Procesos</a></li>
             </ul>
             </div>
