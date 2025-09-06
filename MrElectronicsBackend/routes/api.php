@@ -23,5 +23,5 @@ Route::apiResource('V1/marcas', MarcaController::class);
 Route::apiResource('V1/modelos', ModeloController::class);
 Route::apiResource('V1/pulgadas', PulgadaController::class);
 Route::apiResource('V1/ventas', VentaController::class);
-
+Route::get('V1/ventas/{venta}/factura', [VentaController::class, 'factura']);
 

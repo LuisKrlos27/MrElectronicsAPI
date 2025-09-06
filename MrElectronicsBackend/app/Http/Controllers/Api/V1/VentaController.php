@@ -7,7 +7,9 @@ use App\Models\Cliente;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\VentaResource;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +23,75 @@ class VentaController extends Controller
     {
         $ventas = Venta::with(['cliente', 'detalles.producto'])->get();
         return VentaResource::collection($ventas);
+    }
+
+/**
+ * Generar factura PDF de una venta
+ */
+    public function factura(string $id)
+    {
+        try {
+        // Cargar la venta con todas las relaciones necesarias
+        $venta = Venta::with([
+            'cliente',
+            'detalles.producto.tipo',
+            'detalles.producto.marca',
+            'detalles.producto.modelo',
+            'detalles.producto.pulgada'
+        ])->find($id);
+
+        if (!$venta) {
+            return response()->json([
+                'message' => 'Venta no encontrada',
+            ], 404);
+        }
+
+        // Convertir a array con la estructura que espera la vista
+        $ventaArray = [
+            'id' => $venta->id,
+            'fecha_venta' => $venta->fecha_venta,
+            'total' => $venta->total,
+            'pago' => $venta->pago,
+            'cambio' => $venta->cambio,
+            'cliente' => [
+                'nombre' => $venta->cliente->nombre,
+                'documento' => $venta->cliente->documento,
+                'telefono' => $venta->cliente->telefono,
+                'direccion' => $venta->cliente->direccion,
+            ],
+            'productos' => $venta->detalles->map(function ($detalle) {
+                return [
+                    'tipo' => $detalle->producto->tipo->nombre ?? 'N/A',
+                    'marca' => $detalle->producto->marca->nombre ?? 'N/A',
+                    'modelo' => $detalle->producto->modelo->nombre ?? 'N/A',
+                    'pulgada' => $detalle->producto->pulgada->medida ?? null,
+                    'cantidad' => $detalle->cantidad,
+                    'precio_unitario' => $detalle->precio_unitario,
+                    'subtotal' => $detalle->subtotal
+                ];
+            })->toArray()
+        ];
+
+        // Generar el PDF
+        $pdf = Pdf::loadView('pdf.factura', ['venta' => $ventaArray]);
+
+        // Devolver la respuesta en formato JSON con el PDF en base64
+        return response()->json([
+            'message' => 'Factura generada correctamente',
+            'data' => [
+                'pdf_base64' => base64_encode($pdf->output()),
+                'filename' => 'FACVENT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT) . '.pdf'
+            ]
+        ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error generando factura: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error al generar la factura',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

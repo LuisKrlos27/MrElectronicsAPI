@@ -25,12 +25,36 @@ class VentaController extends Controller
         return view('Ventas.VentasIndex', compact('venta'));
     }
 
-    public function factura(Venta $venta)
+    public function factura(int $id)
     {
-        $venta->load(['cliente', 'detalles.producto']);
-        $pdf = Pdf::loadView('Ventas.VentasShow', compact('venta'));
-        return $pdf->download('FACVENT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT) . '.pdf');
+        $url = env('URL_SERVER_API') . "/ventas/{$id}/factura";
 
+        try {
+            // 1. Hacer petición GET a la API del backend
+            $response = Http::get($url);
+
+            if ($response->successful()) {
+                $data = $response->json()['data'];
+
+                // 2. Decodificar el PDF base64 que devuelve la API
+                $pdfContent = base64_decode($data['pdf_base64']);
+                $filename = $data['filename'];
+
+                // 3. Descargar el PDF
+                return response()->make($pdfContent, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                ]);
+            }
+
+            // 4. Si la API falla, mostrar error
+            $errorMessage = $response->json()['message'] ?? 'No se pudo generar la factura';
+            return back()->with('error', $errorMessage);
+
+        } catch (\Exception $e) {
+            // 5. Si hay error de conexión
+            return back()->with('error', 'Error al conectar con el servidor: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -107,10 +131,46 @@ class VentaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Venta $venta)
+    public function show(int $id)
     {
-        $venta->load(['cliente', 'detalles.producto']); // Carga cliente y productos
-        return view('Ventas.VentasShow', compact('venta'));
+        $url = env('URL_SERVER_API') . "/ventas/{$id}";
+
+        try {
+            $response = Http::get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $venta = $data['data'] ?? $data;
+
+                // Verificar que la venta tiene datos
+                if (empty($venta)) {
+                    return redirect()->route('ventas.index')
+                        ->with('error', 'Venta no encontrada');
+                }
+
+                // Convertir estructura para la vista
+                if (isset($venta['productos'])) {
+                    $venta['detalles'] = array_map(function ($producto) {
+                        return [
+                            'producto_id' => $producto['id'],
+                            'cantidad' => $producto['cantidad'],
+                            'precio_unitario' => $producto['precio_unitario'],
+                            'subtotal' => $producto['subtotal'],
+                            'producto' => $producto
+                        ];
+                    }, $venta['productos']);
+                }
+
+                return view('Ventas.VentasShow', compact('venta'));
+            }
+
+            return redirect()->route('ventas.index')
+                ->with('error', 'No se pudo obtener la venta');
+
+        } catch (\Exception $e) {
+            return redirect()->route('ventas.index')
+                ->with('error', 'Error de conexión: ' . $e->getMessage());
+        }
     }
 
     /**
