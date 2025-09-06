@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Tipo;
 use App\Models\Marca;
 use App\Models\Modelo;
@@ -9,6 +10,7 @@ use App\Models\Pulgada;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ProductoController extends Controller
 {
@@ -58,17 +60,46 @@ class ProductoController extends Controller
     {
         $url = env('URL_SERVER_API') . '/productos';
 
-        // Enviar los datos al backend API
-        $response = Http::post($url, [
-            'tipo'        => $request->nuevo_tipo ?? $request->tipo_id,
-            'marca'       => $request->nueva_marca ?? $request->marca_id,
-            'modelo'      => $request->nuevo_modelo ?? $request->modelo_id,
-            'pulgada'     => $request->nueva_pulgada ?? $request->pulgada_id,
-            'numero_pieza'=> $request->numero_pieza,
+        // Determinar qué enviar para cada campo CORREGIDO
+        $data = [
+            'numero_pieza' => $request->numero_pieza,
             'descripcion' => $request->descripcion,
-            'precio'      => $request->precio,
-            'cantidad'    => $request->cantidad,
-        ]);
+            'precio' => $request->precio,
+            'cantidad' => $request->cantidad,
+        ];
+
+        // Lógica para tipo - CORREGIDO
+        if ($request->tipo_id === 'nuevo' && $request->filled('nuevo_tipo')) {
+            $data['tipo'] = $request->nuevo_tipo; // Enviar nombre del nuevo tipo
+        } else {
+            $data['tipo_id'] = (int)$request->tipo_id; // Enviar ID numérico
+        }
+
+        // Lógica para marca - CORREGIDO
+        if ($request->marca_id === 'nueva' && $request->filled('nueva_marca')) {
+            $data['marca'] = $request->nueva_marca; // Enviar nombre de la nueva marca
+        } else {
+            $data['marca_id'] = (int)$request->marca_id; // Enviar ID numérico
+        }
+
+        // Lógica para modelo - CORREGIDO
+        if ($request->modelo_id === 'nuevo' && $request->filled('nuevo_modelo')) {
+            $data['modelo'] = $request->nuevo_modelo; // Enviar nombre del nuevo modelo
+        } else {
+            $data['modelo_id'] = (int)$request->modelo_id; // Enviar ID numérico
+        }
+
+        // Lógica para pulgada - CORREGIDO
+        if ($request->pulgada_id === 'nuevo' && $request->filled('nueva_pulgada')) {
+            $data['pulgada'] = $request->nueva_pulgada; // Enviar medida de la nueva pulgada
+        } else {
+            $data['pulgada_id'] = (int)$request->pulgada_id; // Enviar ID numérico
+        }
+
+        // DEBUG: Ver qué vamos a enviar
+        //Log::debug('📤 DATOS ENVIADOS A API:', $data);
+
+        $response = Http::post($url, $data);
 
         if ($response->successful()) {
             return redirect()
@@ -76,8 +107,9 @@ class ProductoController extends Controller
                 ->with('success', $response->json()['message']);
         }
 
-        return back()->withErrors(['error' => 'No se pudo guardar el producto']);
-
+        // Mostrar error específico de la API
+        $errorMessage = $response->json()['message'] ?? 'No se pudo guardar el producto';
+        return back()->withErrors(['error' => $errorMessage])->withInput();
     }
 
     /**

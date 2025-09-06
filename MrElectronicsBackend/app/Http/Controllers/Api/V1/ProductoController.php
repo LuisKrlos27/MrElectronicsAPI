@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+
 use App\Models\Tipo;
 use App\Models\Marca;
 use App\Models\Modelo;
@@ -11,9 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
-use App\Http\Resources\V1\ProductoResource;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\V1\ProductoResource;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -38,46 +40,79 @@ class ProductoController extends Controller
     public function store(Request $request)
     {
         // Validación básica
+        //Log::debug("📦 Datos recibidos en backend:", $request->all());
+
+        // VALIDACIÓN CORREGIDA - Los campos correctos
         $request->validate([
-            'tipo' => 'required|string',
-            'marca' => 'required|string',
-            'modelo' => 'required|string',
-            'pulgada' => 'required|string',
             'numero_pieza' => 'nullable|string',
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric',
             'cantidad' => 'required|integer',
-            //Opcionalmente, puedes permitir IDs si vienen desde frontend
-            'tipo_id' => 'nullable|integer|exists:tipos,id',
-            'marca_id' => 'nullable|integer|exists:marcas,id',
-            'modelo_id' => 'nullable|integer|exists:modelos,id',
-            'pulgada_id' => 'nullable|integer|exists:pulgadas,id',
+            // Campos que realmente envía el frontend
+            'tipo_id' => 'nullable|integer',
+            'marca_id' => 'nullable|integer',
+            'modelo_id' => 'nullable|integer',
+            'pulgada_id' => 'nullable|integer',
+            // Campos para nuevos (opcionales)
+            'tipo' => 'nullable|string',
+            'marca' => 'nullable|string',
+            'modelo' => 'nullable|string',
+            'pulgada' => 'nullable|string',
         ]);
 
-        // Tipo
-        if ($request->filled('tipo_id') && $request->tipo_id !== 'nuevo') {
+        // LÓGICA CORREGIDA PARA TIPO
+        if ($request->filled('tipo_id') && is_numeric($request->tipo_id)) {
+            // Usar tipo existente por ID
             $tipo = Tipo::find($request->tipo_id);
-        } else {
+            if (!$tipo) {
+                return response()->json(['message' => 'Tipo no encontrado'], 404);
+            }
+        } elseif ($request->filled('tipo')) {
+            // Crear nuevo tipo por nombre
             $tipo = Tipo::firstOrCreate(['nombre' => $request->tipo]);
+        } else {
+            return response()->json(['message' => 'Debe proporcionar un tipo'], 422);
         }
-        // Marca
-        if ($request->filled('marca_id') && $request->marca_id !== 'nueva') {
+
+        // LÓGICA CORREGIDA PARA MARCA
+        if ($request->filled('marca_id') && is_numeric($request->marca_id)) {
             $marca = Marca::find($request->marca_id);
-        } else {
+            if (!$marca) {
+                return response()->json(['message' => 'Marca no encontrada'], 404);
+            }
+        } elseif ($request->filled('marca')) {
             $marca = Marca::firstOrCreate(['nombre' => $request->marca]);
+        } else {
+            return response()->json(['message' => 'Debe proporcionar una marca'], 422);
         }
-        // Modelo
-        if ($request->filled('modelo_id') && $request->modelo_id !== 'nuevo') {
+
+        // LÓGICA CORREGIDA PARA MODELO
+        if ($request->filled('modelo_id') && is_numeric($request->modelo_id)) {
             $modelo = Modelo::find($request->modelo_id);
+            if (!$modelo) {
+                return response()->json(['message' => 'Modelo no encontrado'], 404);
+            }
+        } elseif ($request->filled('modelo')) {
+            $modelo = Modelo::firstOrCreate([
+                'nombre' => $request->modelo,
+                'marca_id' => $marca->id
+            ]);
         } else {
-            $modelo = Modelo::firstOrCreate([ 'nombre' => $request->modelo, 'marca_id' => $marca->id ]);
+            return response()->json(['message' => 'Debe proporcionar un modelo'], 422);
         }
-        // Pulgada
-        if ($request->filled('pulgada_id') && $request->pulgada_id !== 'nuevo') {
+
+        // LÓGICA CORREGIDA PARA PULGADA
+        if ($request->filled('pulgada_id') && is_numeric($request->pulgada_id)) {
             $pulgada = Pulgada::find($request->pulgada_id);
-        } else {
+            if (!$pulgada) {
+                return response()->json(['message' => 'Pulgada no encontrada'], 404);
+            }
+        } elseif ($request->filled('pulgada')) {
             $pulgada = Pulgada::firstOrCreate(['medida' => $request->pulgada]);
+        } else {
+            return response()->json(['message' => 'Debe proporcionar una pulgada'], 422);
         }
+
         // Crear producto
         $producto = Producto::create([
             'tipo_id' => $tipo->id,
@@ -90,9 +125,12 @@ class ProductoController extends Controller
             'cantidad' => $request->cantidad
         ]);
 
+        // Cargar relaciones para la respuesta
+        $producto->load(['tipo', 'marca', 'modelo', 'pulgada']);
+
         return response()->json([
             'message' => 'Producto registrado correctamente',
-            'data' => $producto
+            'data' => new ProductoResource($producto)
         ], Response::HTTP_ACCEPTED);
     }
 
