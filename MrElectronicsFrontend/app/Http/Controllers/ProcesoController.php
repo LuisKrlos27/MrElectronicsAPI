@@ -9,6 +9,7 @@ use App\Models\Proceso;
 use App\Models\Pulgada;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Http;
 
 class ProcesoController extends Controller
 {
@@ -17,13 +18,13 @@ class ProcesoController extends Controller
      */
     public function index()
     {
-        $clientes = Cliente::all();
-        $procesos = Proceso::with(['cliente', 'marca', 'modelo', 'pulgada'])->get();
-        $marcas = Marca::all();
-        $modelos = Modelo::all();
-        $pulgadas = Pulgada::all();
+        $url = env('URL_SERVER_API') . '/procesos';
 
-        return view('Procesos.ProcesosIndex', compact('clientes','procesos','marcas','modelos','pulgadas'));
+        $response = Http::get($url);
+
+        $procesos = $response->json()['data'] ?? [];
+
+        return view('Procesos.ProcesosIndex', compact('procesos'));
     }
 
     /**

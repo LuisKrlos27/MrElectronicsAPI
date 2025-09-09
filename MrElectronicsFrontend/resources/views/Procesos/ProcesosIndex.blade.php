@@ -26,7 +26,7 @@
         <a href="{{ route('procesos.create') }}" class="font-bold btn btn-outline btn-success">REGISTRAR</a>
     </div>
 
-    @if($procesos->isEmpty())
+    @if(empty($procesos) || $procesos === 0)
         <p class="text-center text-gray-600">No hay procesos registrados.</p>
     @else
     <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
@@ -49,33 +49,33 @@
         <tbody>
             @forelse($procesos as $proceso)
                 <tr>
-                    <td class=" whitespace-nowrap ">{{ $proceso->id }}</td>
-                    <td class=" whitespace-nowrap ">{{ $proceso->cliente->nombre }}</td>
-                    <td class=" whitespace-nowrap ">{{ $proceso->marca->nombre }}</td>
-                    <td class=" whitespace-nowrap ">{{ $proceso->modelo->nombre }}</td>
-                    <td class=" whitespace-nowrap ">{{ $proceso->pulgada?->medida ?? 'No asignada' }}</td>
-                    <td class=" whitespace-nowrap ">{{ $proceso->falla }}</td>
-                    <td class=" whitespace-nowrap ">{{ $proceso->descripcion }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['id'] }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['cliente']['nombre'] }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['marca']['nombre'] }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['modelo']['nombre'] }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['pulgada']['medida'] ?? 'No asignada' }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['falla'] }}</td>
+                    <td class=" whitespace-nowrap ">{{ $proceso['descripcion'] }}</td>
                     <td class=" whitespace-nowrap ">
-                        @if ($proceso->estado)
+                        @if ($proceso['estado'])
                             <span class="badge badge-success">Activo</span>
                         @else
                             <span class="badge badge-error">Inactivo</span>
                         @endif
                     </td>
-                    <td class="whitespace-nowrap">{{ $proceso->fecha_inicio->format('Y-m-d') }}</td>
+                    <td class="whitespace-nowrap">{{ $proceso['fecha_ingreso']->format('Y-m-d') }}</td>
                     <td class="whitespace-nowrap">
-                        @if($proceso->fecha_cierre)
-                            {{ $proceso->fecha_cierre->format('Y-m-d') }}
+                        @if($proceso['fecha_cierre'])
+                            {{ $proceso['fecha_cierre']->format('Y-m-d') }}
                         @else
                             Pendiente
                         @endif
 
                         </td><td class="flex flex-col sm:flex-row gap-1">
-                            <a href="{{ route('procesos.show', $proceso->id) }}" class="font-bold btn-sm btn btn-outline btn-info">Ver evidencias</a>
-                            <a href="{{ route('procesos.factura', $proceso->id) }}" class="font-bold btn-sm btn btn-outline">Factura</a>
-                            <a href="{{ route('procesos.imprimirFactura', $proceso->id) }}" class="font-bold btn-sm btn btn-outline btn-primary">Imprimir</a>
-                            <a href="{{ route('procesos.edit', $proceso->id) }}" class="font-bold btn-sm btn btn-outline btn-warning">Editar</a>
+                            <a href="{{ route('procesos.show', $proceso['id']) }}" class="font-bold btn-sm btn btn-outline btn-info">Ver evidencias</a>
+                            <a href="{{ route('procesos.factura', $proceso['id']) }}" class="font-bold btn-sm btn btn-outline">Factura</a>
+                            <a href="{{ route('procesos.imprimirFactura', $proceso['id']) }}" class="font-bold btn-sm btn btn-outline btn-primary">Imprimir</a>
+                            <a href="{{ route('procesos.edit', $proceso['id']) }}" class="font-bold btn-sm btn btn-outline btn-warning">Editar</a>
                             {{-- <form action="{{ route('procesos.destroy', $proceso->id) }}" method="POST" onsubmit="return confirm('¿Estas seguro de eliminar este producto?')">
                                 @csrf
                                 @method('DELETE')
