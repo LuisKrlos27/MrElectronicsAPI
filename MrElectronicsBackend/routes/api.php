@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\V1\EvidenciaController;
 // Route::get('/', function () {
 //     return view('Landing.Langing');
 // });
-//ruta para clientes 
+//ruta para clientes
 Route::apiResource('V1/clientes',ClienteController::class );
 
 //ruta para productos
@@ -42,3 +42,5 @@ Route::prefix('V1/procesos/{proceso_id}')->group(function () {
     Route::put('evidencias/{evidencia_id}', [EvidenciaController::class, 'update']);
     Route::delete('evidencias/{evidencia_id}', [EvidenciaController::class, 'destroy']);
 });
+Route::get('V1/procesos/{proceso}/factura', [ProcesoController::class, 'factura']);
+

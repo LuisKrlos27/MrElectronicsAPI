@@ -73,7 +73,7 @@ class VentaController extends Controller
         ];
 
         // Generar el PDF
-        $pdf = Pdf::loadView('pdf.factura', ['venta' => $ventaArray]);
+        $pdf = Pdf::loadView('PdfVentas.factura', ['venta' => $ventaArray]);
 
         // Devolver la respuesta en formato JSON con el PDF en base64
         return response()->json([

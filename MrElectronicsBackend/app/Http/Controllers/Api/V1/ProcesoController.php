@@ -9,6 +9,8 @@ use App\Models\Proceso;
 use App\Models\Pulgada;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\ProcesoResource;
 
@@ -21,6 +23,67 @@ class ProcesoController extends Controller
     {
         $procesos = Proceso::with(['cliente', 'marca', 'modelo', 'pulgada'])->get();
         return ProcesoResource::collection($procesos);
+    }
+
+    public function factura(string $id){
+        try {
+            // Cargar el proceso con todas las relaciones necesarias
+            $proceso = Proceso::with([
+                'cliente',
+                'marca',
+                'modelo',
+                'pulgada',
+            ])->find($id);
+
+            if (!$proceso) {
+                return response()->json([
+                    'message' => 'Proceso no encontrado',
+                ], 404);
+            }
+
+            // Convertir a array con la estructura que espera la vista
+            $procesoArray = [
+                'id' => $proceso->id,
+                'falla' => $proceso->falla,
+                'descripcion' => $proceso->descripcion,
+                'fecha_inicio' => $proceso->fecha_inicio,
+                'cliente' => [
+                    'nombre' => $proceso->cliente->nombre,
+                    'documento' => $proceso->cliente->documento,
+                    'telefono' => $proceso->cliente->telefono,
+                    'direccion' => $proceso->cliente->direccion,
+                ],
+                'marca' => [
+                    'nombre' => $proceso->marca->nombre,
+                ],
+                'modelo' => [
+                    'nombre' => $proceso->modelo->nombre,
+                ],
+                'pulgada' => [
+                    'medida' => $proceso->pulgada->medida,
+                ],
+            ];
+
+            $pdf = Pdf::loadView('PdfProcesos.Factura', ['proceso' => $procesoArray]);
+
+            // Devolver la respuesta en formato JSON con el PDF en base64
+            return response()->json([
+                'message' => 'Factura generada correctamente',
+                'data' => [
+                    'pdf_base64' => base64_encode($pdf->output()),
+                    'filename' => 'FACPRO-' . str_pad($proceso->id, 5, '0', STR_PAD_LEFT) . '.pdf'
+                ]
+            ]);
+
+
+        } catch (\Exception $e) {
+            Log::error('Error generando factura: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error al generar la factura',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -42,9 +105,9 @@ class ProcesoController extends Controller
             'pulgada_id' => 'nullable|integer',
             //campos para nuevos (opcionales)
             'cliente' => 'nullable|string',
-            'documento' => 'nullable|string', 
-            'telefono' => 'nullable|string',  
-            'direccion' => 'nullable|string', 
+            'documento' => 'nullable|string',
+            'telefono' => 'nullable|string',
+            'direccion' => 'nullable|string',
             'marca' => 'nullable|string',
             'modelo' => 'nullable|string',
             'pulgada' => 'nullable|string'
@@ -59,7 +122,7 @@ class ProcesoController extends Controller
             }
         } elseif ($request->filled('cliente')) {
             // crear nuevo cliente por nombre
-            $cliente = Cliente::firstOrCreate([ 
+            $cliente = Cliente::firstOrCreate([
             'nombre' => $request->cliente,
             'documento' => $request->documento,
             'telefono' => $request->telefono,
@@ -136,13 +199,13 @@ class ProcesoController extends Controller
     public function show(string $id)
     {
         $procesos = Proceso::with(['cliente', 'marca', 'modelo', 'pulgada','evidencias'])->find($id);
-        
+
         if (!$procesos) {
             return response()->json([
                 'message' => 'Proceso no encontrado',
             ], Response::HTTP_NOT_FOUND);
         }
-        
+
         return new ProcesoResource($procesos);
     }
 
@@ -270,7 +333,7 @@ class ProcesoController extends Controller
         $proceso->load(['cliente', 'marca', 'modelo', 'pulgada']);
 
         return response()->json([
-            'message' => 'Proceso actualizado correctamente',   
+            'message' => 'Proceso actualizado correctamente',
             'data' => new ProcesoResource($proceso)
         ], Response::HTTP_OK);
     }
@@ -279,7 +342,7 @@ class ProcesoController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(Proceso $proceso)
-    {    
+    {
         $proceso->delete();
 
         return response()->json([
