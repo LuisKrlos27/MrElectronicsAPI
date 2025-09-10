@@ -63,10 +63,10 @@
                             <span class="badge badge-error">Inactivo</span>
                         @endif
                     </td>
-                    <td class="whitespace-nowrap">{{ $proceso['fecha_ingreso']->format('Y-m-d') }}</td>
+                    <td class="whitespace-nowrap">{{ \Carbon\Carbon::parse($proceso['fecha_inicio'])->format('Y-m-d') }}</td>
                     <td class="whitespace-nowrap">
                         @if($proceso['fecha_cierre'])
-                            {{ $proceso['fecha_cierre']->format('Y-m-d') }}
+                            {{ \Carbon\Carbon::parse($proceso['fecha_cierre'])->format('Y-m-d') }}
                         @else
                             Pendiente
                         @endif
