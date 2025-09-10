@@ -135,7 +135,7 @@ class ProcesoController extends Controller
      */
     public function show(string $id)
     {
-        $procesos = Proceso::with(['cliente', 'marca', 'modelo', 'pulgada'])->find($id);
+        $procesos = Proceso::with(['cliente', 'marca', 'modelo', 'pulgada','evidencias'])->find($id);
         
         if (!$procesos) {
             return response()->json([

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\V1;
 
 use Illuminate\Http\Request;
+use App\Http\Resources\V1\EvidenciaResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProcesoResource extends JsonResource
@@ -40,6 +41,7 @@ class ProcesoResource extends JsonResource
             'estado' => $this->estado,
             'fecha_inicio' => $this->fecha_inicio,
             'fecha_cierre' => $this->fecha_cierre,
+            'evidencias' => EvidenciaResource::collection($this->whenLoaded('evidencias')),
         ];
     }
 }
