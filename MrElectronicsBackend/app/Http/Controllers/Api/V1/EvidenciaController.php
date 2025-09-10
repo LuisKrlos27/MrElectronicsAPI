@@ -29,7 +29,7 @@ class EvidenciaController extends Controller
             'proceso_id' => $proceso->id,
             'evidencias' => EvidenciaResource::collection($evidencias)
         ]);
-            
+
     }
 
     /**
@@ -93,22 +93,25 @@ class EvidenciaController extends Controller
     public function update(Request $request, $proceso_id, $evidencia_id)
     {
         $evidencia = Evidencia::where('proceso_id', $proceso_id)->where('id', $evidencia_id)->first();
-        
+
         if(!$evidencia){
             return response()->json(['message' => 'Evidencia no encontrada'], 404);
         }
 
         $request->validate([
-            'imagen' => 'required|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'comentario' => 'required|string|max:500'
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'comentario' => 'nullable|string|max:500'
         ]);
+
+        $evidencia->comentario = $request->input('comentario');
+
 
         if ($request->hasFile('imagen')) {
             //eliminar imagen anterior
             if($evidencia->imagen && Storage::disk('public')->exists($evidencia->imagen)){
                 Storage::disk('public')->delete($evidencia->imagen);
             }
-            
+
             //guardar nueva imagen
             $imagenPath = $request->file('imagen')->store('evidencias','public');
 
@@ -116,15 +119,13 @@ class EvidenciaController extends Controller
 
         }
 
-        $evidencia->comentario = $request->input('comentario');
-
         $evidencia->save();
 
         return response()->json([
             'message' => 'Evidencia actualizada correctamente',
             'data' => new EvidenciaResource($evidencia)
         ], Response::HTTP_OK);
-    }   
+    }
 
 
     /**
