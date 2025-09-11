@@ -28,7 +28,7 @@
     @if(empty($clientes) || count($clientes) === 0)
         <p class="text-center text-gray-600">No hay clientes registrados.</p>
     @else
-        <div class="overflow-x-auto overflow-y-auto rounded-box border border-base-content/5 bg-base-100" style="max-height: 500px;">
+        <div class="overflow-x-auto overflow-y-auto rounded-box border border-base-content/5 bg-base-100" style="max-height: 390px;">
             <table class="table">
                 <thead>
                     <tr>

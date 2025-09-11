@@ -9,6 +9,7 @@ use App\Models\Proceso;
 use App\Models\Pulgada;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
 class ProcesoController extends Controller
@@ -32,96 +33,86 @@ class ProcesoController extends Controller
      */
     public function create()
     {
-        $procesos = Proceso::with(['cliente', 'marca', 'modelo', 'pulgada'])->get();
-        $clientes = Cliente::all();
-        $marcas = Marca::all();
-        $modelos = Modelo::all();
-        $pulgadas = Pulgada::all();
+        $url = env('URL_SERVER_API');
 
-        return view('Procesos.ProcesosForm', compact('clientes','procesos','marcas','modelos','pulgadas'));
-    }
+        //consultamos cada endpoint
+        $clientesResponse = Http::get("{$url}/clientes");
+        $marcasResponse = Http::get("{$url}/marcas");
+        $modelosResponse = Http::get("{$url}/modelos");
+        $pulgadasResponse = Http::get("{$url}/pulgadas");
+
+        //extraemos la data (Laravel API Resources devuelve ["data" => [...]])
+        $clientes = $clientesResponse->json()['data'] ?? [];
+        $marcas = $marcasResponse->json()['data'] ?? [];
+        $modelos = $modelosResponse->json()['data'] ?? [];
+        $pulgadas = $pulgadasResponse->json()['data'] ?? [];
+
+        //pasamos todo a la vista de creación
+        return view('Procesos.ProcesosForm', compact('clientes', 'marcas', 'modelos', 'pulgadas'));
+
+        }
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'cliente_id' => 'required',
-            'marca_id'   => 'required',
-            'modelo_id'  => 'required',
-            'pulgada_id' => 'required',
-            'falla'      => 'required|string|max:255',
-            'estado'     => 'required|in:0,1',
-        ]);
 
-        // ==============================
-        // 1. Cliente
-        // ==============================
-        if ($request->cliente_id === "nuevo") {
-            $cliente = Cliente::create([
-                'nombre'     => $request->nuevo_cliente_nombre,
-                'documento'  => $request->nuevo_cliente_documento,
-                'telefono'   => $request->nuevo_cliente_telefono,
-                'direccion'  => $request->nuevo_cliente_direccion,
-            ]);
-            $cliente_id = $cliente->id;
+        $url = env('URL_SERVER_API') . '/procesos';
+
+        //determinar que enviar para cada campo
+        $data = [
+            'falla'=> $request->falla,
+            'descripcion'=> $request->descripcion,
+            'estado'=> $request->estado,
+
+        ];
+
+        //logica para marca
+        if ($request->marca_id === 'nueva' && $request->filled('nueva_marca')) {
+            $data['marca'] = $request->nueva_marca; //enviar nombre de la nueva marca
         } else {
-            $cliente_id = $request->cliente_id;
+            $data['marca_id'] = (int)$request->marca_id; //enviar ID numerico
         }
 
-        // ==============================
-        // 2. Marca
-        // ==============================
-        if ($request->marca_id === "nueva") {
-            $marca = Marca::create([
-                'nombre' => $request->nueva_marca,
-            ]);
-            $marca_id = $marca->id;
+        //logica para modelo
+        if ($request->modelo_id === 'nuevo' && $request->filled('nuevo_modelo')) {
+            $data['modelo'] = $request->nuevo_modelo; //enviar nombre del nuevo modelo
         } else {
-            $marca_id = $request->marca_id;
+            $data['modelo_id'] = (int)$request->modelo_id; //enviar ID numerico
         }
 
-        // ==============================
-        // 3. Modelo
-        // ==============================
-        if ($request->modelo_id === "nuevo") {
-            $modelo = Modelo::create([
-                'nombre'   => $request->nuevo_modelo,
-                'marca_id' => $marca_id, // relacionar modelo con su marca
-            ]);
-            $modelo_id = $modelo->id;
+        //logica para pulgada
+        if ($request->pulgada_id === 'nuevo' && $request->filled('nueva_pulgada')) {
+            $data['pulgada'] = $request->nueva_pulgada; //enviar medida de la nueva pulgada
         } else {
-            $modelo_id = $request->modelo_id;
+            $data['pulgada_id'] = (int)$request->pulgada_id; //enviar ID numerico
         }
 
-        // ==============================
-        // 4. Pulgada
-        // ==============================
-        if ($request->pulgada_id === 'nuevo') {
-            $pulgada = Pulgada::create([
-                'medida' => $request->nueva_pulgada,
-            ]);
-            $pulgada_id = $pulgada->id;
+        //logica para cliente
+        if ($request->cliente_id === 'nuevo' && $request->filled('nuevo_cliente_nombre')) {
+            $data['cliente'] = $request->nuevo_cliente_nombre;
+            $data['documento'] = $request->nuevo_cliente_documento;
+            $data['telefono'] = $request->nuevo_cliente_telefono;
+            $data['direccion'] = $request->nuevo_cliente_direccion;
         } else {
-            $pulgada_id = $request->pulgada_id;
+            $data['cliente_id'] = (int)$request->cliente_id; //enviar nombre del nuevo cliente
+        }
+        //DEBUG: ver que vamos a enviar
+        //Log::debug('📤 DATOS ENVIADOS A API:', $data);
+
+        $response = Http::post($url, $data);
+
+        if ($response->successful()) {
+            return redirect()->route('procesos.index')->with('success', $response->json()['message']);
         }
 
-        // ==============================
-        // 5. Guardar el Proceso
-        // ==============================
-        Proceso::create([
-            'cliente_id'  => $cliente_id,
-            'marca_id'    => $marca_id,
-            'modelo_id'   => $modelo_id,
-            'pulgada_id'  => $pulgada_id,
-            'falla'       => $request->falla,
-            'descripcion' => $request->descripcion,
-            'estado'      => $request->estado,
-        ]);
-
-        return redirect()->route('procesos.index')->with('success', 'Proceso registrado correctamente.');
+        //mostrar error especifico de la API
+        $errorMessage = $response->json()['message'] ?? 'No se pudo guardar el proceso';
+        return back()->withErrors(['error' => $errorMessage])->withInput();
     }
+
+
 
     /**
      * Display the specified resource.

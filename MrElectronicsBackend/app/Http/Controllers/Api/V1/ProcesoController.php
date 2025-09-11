@@ -91,6 +91,11 @@ class ProcesoController extends Controller
      */
     public function store(Request $request)
     {
+        // Si no viene fecha_inicio, usamos ahora()
+        if (!$request->filled('fecha_inicio')) {
+            $request->merge(['fecha_inicio' => now()->format('Y-m-d')]);
+        }
+
         //validamos los datos
         $request->validate([
             'falla' => 'required|string',
@@ -123,10 +128,12 @@ class ProcesoController extends Controller
         } elseif ($request->filled('cliente')) {
             // crear nuevo cliente por nombre
             $cliente = Cliente::firstOrCreate([
-            'nombre' => $request->cliente,
-            'documento' => $request->documento,
-            'telefono' => $request->telefono,
-            'direccion' => $request->direccion]);
+                'documento' => $request->documento], // búsqueda por documento si existe
+                [
+                'nombre'    => $request->cliente,
+                'telefono'  => $request->telefono,
+                'direccion' => $request->direccion
+        ]);
 
         } else {
             return response()->json(['message' => 'Debe proporcionar un cliente'], 422);
@@ -152,8 +159,8 @@ class ProcesoController extends Controller
             }
         } elseif ($request->filled('modelo')) {
             $modelo = Modelo::firstOrCreate([
-                'nombre' => $request->modelo
-            ]);
+                'nombre' => $request->modelo,
+                'marca_id' => $marca->id]);
         } else{
             return response()->json(['message' => 'Debe proporcionar un modelo'], 422);
         }

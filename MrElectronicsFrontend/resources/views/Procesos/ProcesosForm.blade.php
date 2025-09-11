@@ -1,4 +1,3 @@
-{{-- resources/views/procesos/create.blade.php --}}
 @extends('welcome')
 @section('content')
 
@@ -11,10 +10,10 @@
         <!-- Cliente -->
         <div class="md:col-span-2">
             <label class="text-sm font-semibold text-gray-600">Cliente</label>
-            <select name="cliente_id" id="cliente_id" class="select select-bordered w-full">
+            <select name="cliente_id" id="cliente_id" class="select select-bordered w-full" required>
                 <option value="">Selecciona un cliente</option>
                 @foreach($clientes as $cliente)
-                    <option value="{{ $cliente->id }}">{{ $cliente->nombre }}</option>
+                    <option value="{{ $cliente['id'] }}">{{ $cliente['nombre'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nuevo cliente</option>
             </select>
@@ -50,10 +49,10 @@
         <!-- Marca -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Marca</label>
-            <select name="marca_id" id="marca_id" class="select select-bordered w-full">
+            <select name="marca_id" id="marca_id" class="select select-bordered w-full" required>
                 <option value="">Selecciona una marca</option>
                 @foreach($marcas as $marca)
-                    <option value="{{ $marca->id }}">{{ $marca->nombre }}</option>
+                    <option value="{{ $marca['id'] }}">{{ $marca['nombre'] }}</option>
                 @endforeach
                 <option value="nueva">+ Agregar nueva marca</option>
             </select>
@@ -63,10 +62,10 @@
         <!-- Modelo -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Modelo</label>
-            <select name="modelo_id" id="modelo_id" class="select select-bordered w-full">
+            <select name="modelo_id" id="modelo_id" class="select select-bordered w-full" required>
                 <option value="">Selecciona un modelo</option>
                 @foreach($modelos as $modelo)
-                    <option value="{{ $modelo->id }}">{{ $modelo->nombre }}</option>
+                    <option value="{{ $modelo['id'] }}">{{ $modelo['nombre'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nuevo modelo</option>
             </select>
@@ -76,10 +75,10 @@
         <!-- Pulgadas -->
         <div>
             <label class="text-sm font-semibold text-gray-600">Pulgadas</label>
-            <select name="pulgada_id" id="pulgada_id" class="select select-bordered w-full">
+            <select name="pulgada_id" id="pulgada_id" class="select select-bordered w-full" required>
                 <option value="">Selecciona una pulgada</option>
                 @foreach($pulgadas as $pulgada)
-                    <option value="{{ $pulgada->id }}">{{ $pulgada->medida }}</option>
+                    <option value="{{ $pulgada['id'] }}">{{ $pulgada['medida'] }}</option>
                 @endforeach
                 <option value="nuevo">+ Agregar nueva pulgada</option>
             </select>
@@ -101,7 +100,7 @@
         <!-- Estado -->
         <div class="md:col-span-2">
             <label class="text-sm font-semibold text-gray-600">Estado</label>
-            <select name="estado" class="select select-bordered w-full">
+            <select name="estado" class="select select-bordered w-full" required>
                 <option value="1" {{ old('estado') == 1 ? 'selected' : '' }}>Abierto</option>
                 <option value="0" {{ old('estado') == 0 ? 'selected' : '' }}>Cerrado</option>
             </select>
