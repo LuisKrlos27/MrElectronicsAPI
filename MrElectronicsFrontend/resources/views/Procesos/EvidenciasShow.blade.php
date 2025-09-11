@@ -9,8 +9,8 @@
             <p class="text-gray-500">MR ELECTRONICS</p>
         </div>
         <div>
-            <p><strong>Fecha:</strong> {{ $proceso->fecha_inicio->format('d/m/Y') }}</p>
-            <p><strong>PROCESO #:</strong> FACPROC-{{ str_pad($proceso->id, 5, '0', STR_PAD_LEFT) }}</p>
+            <p><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($proceso['fecha_inicio'])->format('d/m/Y') }}</p>
+            <p><strong>PROCESO #:</strong> FACPROC-{{ str_pad($proceso['id'], 5, '0', STR_PAD_LEFT) }}</p>
         </div>
     </header>
 
@@ -34,12 +34,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{ $proceso->cliente->nombre }}</td>
-                        <td>{{ $proceso->marca->nombre }}</td>
-                        <td>{{ $proceso->modelo->nombre }}</td>
-                        <td>{{ $proceso->pulgada->medida }}</td>
-                        <td>{{ $proceso->falla }}</td>
-                        <td>{{ $proceso->descripcion }}</td>
+                        <td>{{ $proceso['cliente']['nombre'] }}</td>
+                        <td>{{ $proceso['marca']['nombre']}}</td>
+                        <td>{{ $proceso['modelo']['nombre'] }}</td>
+                        <td>{{ $proceso['pulgada']['medida'] }}</td>
+                        <td>{{ $proceso['falla'] }}</td>
+                        <td>{{ $proceso['descripcion'] }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -47,13 +47,14 @@
     </div>
 
     <!-- Formulario agregar evidencias -->
-    <form action="{{ route('evidencias.store', $proceso->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <form action="{{ route('evidencias.store', $proceso['id']) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
         @csrf
         <div id="contenedor-evidencias" class="space-y-6">
             <div class="bloque-evidencia border p-4 rounded-lg bg-base-200">
                 <div>
                     <label class="block font-semibold">Imagen</label>
-                    <input type="file" name="imagenes[]" class="file-input file-input-bordered w-full" accept="image/*">
+                    <input type="file" name="imagenes[]" class="file-input file-input-bordered w-full" accept="image/*" onchange="previewImage(event, this)">
+                    <img class="preview mt-2 w-32 h-32 object-cover rounded hidden">
                 </div>
                 <div>
                     <label class="block font-semibold">Comentario</label>
@@ -77,19 +78,19 @@
     <div class="mt-10">
         <h3 class="text-xl font-semibold mb-4">Evidencias registradas</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach($proceso->evidencias as $evidencia)
+            @foreach($proceso['evidencias'] as $evidencia)
                 <div class="card bg-base-200 shadow-md p-4 rounded-lg flex flex-col">
-                    @if($evidencia->imagen)
-                        <img src="{{ asset('storage/' . $evidencia->imagen) }}"
+                    @if($evidencia['imagen'])
+                        <img src="{{ $evidencia['imagen'] }}"
                             alt="Evidencia"
                             class="w-full h-40 object-cover rounded-md mb-3">
                     @endif
 
                     <div class="flex justify-between items-start">
-                        <p class="text-white-800 flex-1">{{ $evidencia->comentario }}</p>
+                        <p class="text-white-800 flex-1">{{ $evidencia['comentario'] }}</p>
 
                         <!-- Botón eliminar -->
-                        <form action="{{ route('evidencias.destroy', $evidencia->id) }}" method="POST"
+                        <form action="{{ route('evidencias.destroy', $evidencia['id']) }}" method="POST"
                             onsubmit="return confirm('¿Estás seguro de eliminar esta evidencia?');"
                             class="ml-4 flex-shrink-0">
                             @csrf
@@ -102,8 +103,14 @@
         </div>
     </div>
 
-    <div class="mt-6 text-center">
-        <a href="{{ route('procesos.index') }}" class="btn btn-outline btn-warning">← Volver al listado</a>
+    <!-- Botones de acción -->
+    <div class="mt-8 flex justify-center gap-4">
+        <a href="{{ route('procesos.factura', $proceso['id']) }}" class="btn btn-outline btn-primary" target="_blank">
+            📄 Descargar Factura
+        </a>
+        <a href="{{ route('procesos.index') }}" class="btn btn-outline btn-warning">
+            ← Volver al listado
+        </a>
     </div>
 
     <footer class="text-center text-gray-500 mt-12">
@@ -120,5 +127,17 @@
         bloque.querySelectorAll('input, textarea').forEach(el => el.value = '');
         contenedor.appendChild(bloque);
     });
+
+    function previewImage(event, input) {
+    const file = input.files[0];
+    const preview = input.parentElement.querySelector(".preview");
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove("hidden");
+    } else {
+        preview.classList.add("hidden");
+    }
+}
+
 </script>
 @endsection

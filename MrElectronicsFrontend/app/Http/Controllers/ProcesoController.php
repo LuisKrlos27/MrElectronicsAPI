@@ -117,13 +117,43 @@ class ProcesoController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Proceso $proceso)
+    public function show(int $id)
     {
-        // Cargamos el cliente, marca, modelo y evidencias
-        $proceso->load(['cliente', 'marca', 'modelo', 'evidencias']);
+        $url = env('URL_SERVER_API') . "/procesos/{$id}";
 
-        return view('Procesos.EvidenciasShow', compact('proceso'));
+        try {
+            $response = Http::get($url);
 
+            if ($response->successful()) {
+                $data = $response->json();
+                $proceso = $data['data'] ?? $data;
+
+                // Verificar que el proceso tiene datos
+                if (empty($proceso)) {
+                    return redirect()->route('procesos.index')
+                        ->with('error', 'Proceso no encontrado');
+                }
+
+                // Convertir estructura para la vista
+                if (isset($proceso['evidencias'])) {
+                    $proceso['evidencias'] = array_map(function ($evidencia) {
+                        return [
+                            'id' => $evidencia['id'],
+                            'imagen' => $evidencia['imagen'],
+                            'comentario' => $evidencia['comentario'],
+                        ];
+                    }, $proceso['evidencias']);
+                }
+                return view('Procesos.EvidenciasShow', compact('proceso'));
+            }
+
+            return redirect()->route('procesos.index')
+                ->with('error', 'No se pudo obtener el proceso');
+
+        } catch (\Exception $e) {
+            return redirect()->route('procesos.index')
+                ->with('error', 'Error de conexión: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -155,18 +185,37 @@ class ProcesoController extends Controller
     /**
      * Display an invoice for the specified resource.
      */
-    public function factura(Proceso $proceso)
+    public function factura(int $id)
     {
-        // The 'with' is important to load relationships
-        $proceso->load(['cliente', 'marca', 'modelo', 'pulgada']);
+        $url = env('URL_SERVER_API') . "/procesos/{$id}/factura";
 
-        return view('Procesos.Factura', compact('proceso'));
+        try {
+            // 1. Hacer petición GET a la API del backend
+            $response = Http::get($url);
+
+            if ($response->successful()) {
+                $data = $response->json()['data'];
+
+                // 2. Decodificar el PDF base64 que devuelve la API
+                $pdfContent = base64_decode($data['pdf_base64']);
+                $filename = $data['filename'];
+
+                // 3. Descargar el PDF
+                return response()->make($pdfContent, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                ]);
+            }
+
+            // 4. Si la API falla, mostrar error
+            $errorMessage = $response->json()['message'] ?? 'No se pudo generar la factura';
+            return back()->with('error', $errorMessage);
+
+        } catch (\Exception $e) {
+            // si hay error de conexión
+            return back()->with('error', 'Error al conectar con el servidor: ' . $e->getMessage());
+        }
+
     }
 
-    public function imprimirFactura(Proceso $proceso)
-    {
-        $proceso->load(['cliente', 'marca','modelo','pulgada']);
-        $pdf = Pdf::loadView('procesos.Factura', compact('proceso'));
-        return $pdf->download('FACPRO-' . str_pad($proceso->id, 5, '0', STR_PAD_LEFT) . '.pdf');
-    }
 }
