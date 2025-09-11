@@ -48,6 +48,7 @@
 
     <!-- Formulario agregar evidencias -->
     <form action="{{ route('evidencias.store', $proceso['id']) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+
         @csrf
         <div id="contenedor-evidencias" class="space-y-6">
             <div class="bloque-evidencia border p-4 rounded-lg bg-base-200">
@@ -83,7 +84,7 @@
                     @if($evidencia['imagen'])
                         <img src="{{ $evidencia['imagen'] }}"
                             alt="Evidencia"
-                            class="w-full h-40 object-cover rounded-md mb-3">
+                            class="w-full h-40 object-cover rounded-md mb-3" onerror="this.style.display='none'">
                     @endif
 
                     <div class="flex justify-between items-start">

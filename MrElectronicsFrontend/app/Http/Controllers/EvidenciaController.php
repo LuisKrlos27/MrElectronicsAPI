@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Evidencia;
 use App\Models\Proceso;
+use App\Models\Evidencia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class EvidenciaController extends Controller
 {
@@ -30,23 +31,44 @@ class EvidenciaController extends Controller
     public function store(Request $request, $proceso_id )
     {
         $request->validate([
-        'imagenes.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'comentarios.*' => 'nullable|string',
+            'imagenes.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'comentarios.*' => 'nullable|string',
         ]);
 
-        if($request->hasFile('imagenes')) {
-            foreach($request->file('imagenes') as $index => $imagen) {
-                $path = $imagen->store('evidencias', 'public');
+        $url = env('URL_SERVER_API') . "/procesos/{$proceso_id}/evidencias";
 
-                Evidencia::create([
-                    'proceso_id' => $proceso_id,
-                    'imagen' => $path,
-                    'comentario' => $request->comentarios[$index] ?? null,
-                ]);
-            }
+        $imagenes = $request->file('imagenes');
+        $comentarios = $request->input('comentarios', []);
+
+        $http = Http::accept('application/json')->asMultipart();
+
+        // adjuntar imagenes
+        foreach ($imagenes as $index => $imagen) {
+            $http = $http->attach(
+                "imagenes[$index]",
+                fopen($imagen->getPathname(), 'r'),
+                $imagen->getClientOriginalName()
+            );
         }
 
-        return back()->with('success', 'Evidencias registradas correctamente.');
+        // Adjuntar comentario si existe, sino no enviar
+        if (!empty($comentarios[$index])) {
+            $http = $http->attach(
+                "comentarios[$index]",
+                $comentarios[$index]
+            );
+        }
+
+
+        // Enviar la petición POST
+        $response = $http->post($url);
+
+        if ($response->successful()) {
+            return back()->with('success', $response->json()['message'] ?? 'Evidencias registradas correctamente.');
+        }
+
+        $errorMessage = $response->json()['message'] ?? 'No se pudo registrar la evidencia';
+        return back()->withErrors(['error' => $errorMessage])->withInput();
     }
     /**
      * Display the specified resource.

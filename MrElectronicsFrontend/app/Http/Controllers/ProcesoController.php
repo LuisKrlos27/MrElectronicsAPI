@@ -103,13 +103,51 @@ class ProcesoController extends Controller
 
         $response = Http::post($url, $data);
 
+        // if ($response->successful()) {
+        //     return redirect()->route('procesos.index')->with('success', $response->json()['message']);
+        // }
+
         if ($response->successful()) {
-            return redirect()->route('procesos.index')->with('success', $response->json()['message']);
+            $errorMessage = $response->json()['message'] ?? 'No se pudo guardar el proceso';
+            return back()->withErrors(['error' => $errorMessage])->withInput();
         }
 
-        //mostrar error especifico de la API
-        $errorMessage = $response->json()['message'] ?? 'No se pudo guardar el proceso';
-        return back()->withErrors(['error' => $errorMessage])->withInput();
+        $procesoId = $response->json()['data']['id'] ?? null;
+
+        if($request->hasFile('imagenes') && $procesoId){
+            $imagenes = $request->file('imagenes');
+            $comentarios = $request->comentarios ?? [];
+
+            $http = Http::accept('application/json')->asMultipart();
+
+            // $requestPost = $http->asMultipart();
+
+            foreach ($imagenes as $index => $file) {
+
+                $http = $http->attach(
+                    "imagenes[$index]",
+                    file_get_contents($file->getRealPath()),
+                    $file->getClientOriginalName()
+                );
+            }
+
+            //comentarios como campos normales
+            foreach($comentarios as $index => $comentario){
+                $http = $http->field('comentarios[$index]', $comentario);
+
+            }
+
+            //hacaer la petion post final
+            $evidenciaResponse = $http->post(env('URL_SERVER_API') . "/procesos/{$procesoId}/evidencias");
+
+            if(!$evidenciaResponse->successful()){
+                $errorMessage = $evidenciaResponse->json()['message'] ?? 'No se pudo registrar la evidencia';
+                return back()->withErrors(['error' => $errorMessage])->withInput();
+            }
+            return redirect()->route('procesos.index')
+                ->with('success', $response->json()['message'] ?? 'Proceso registrado correctamente');
+
+        }
     }
 
 
@@ -120,6 +158,7 @@ class ProcesoController extends Controller
     public function show(int $id)
     {
         $url = env('URL_SERVER_API') . "/procesos/{$id}";
+        // $backurl = env('URL_SERVER_API');
 
         try {
             $response = Http::get($url);
