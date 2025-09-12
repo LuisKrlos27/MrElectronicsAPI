@@ -4,6 +4,7 @@ namespace App\Http\Resources\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class EvidenciaResource extends JsonResource
 {
@@ -17,7 +18,7 @@ class EvidenciaResource extends JsonResource
         return  [
             'id' => $this->id,
             'proceso_id' => $this->proceso_id,
-            'imagen' => $this->imagen ? asset('storage/' . $this->imagen) : null,
+            'imagen' => $this->imagen ? url(Storage::url($this->imagen)) : null,
             'comentario' => $this->comentario,
         ];
     }

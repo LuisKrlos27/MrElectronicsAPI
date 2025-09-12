@@ -84,7 +84,7 @@
                     @if($evidencia['imagen'])
                         <img src="{{ $evidencia['imagen'] }}"
                             alt="Evidencia"
-                            class="w-full h-40 object-cover rounded-md mb-3" onerror="this.style.display='none'">
+                            class="w-full h-40 object-cover rounded-md mb-3" >
                     @endif
 
                     <div class="flex justify-between items-start">
