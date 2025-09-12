@@ -214,4 +214,45 @@ class ProcesoController extends Controller
 
     }
 
+    public function VerFactura(int $id)
+    {
+        $url = env('URL_SERVER_API') . "/procesos/{$id}";
+
+        try {
+            $response = Http::get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $proceso = $data['data'] ?? $data;
+
+                // Verificar que el proceso tenga datos
+                if (empty($proceso)) {
+                    return redirect()->route('procesos.index')
+                        ->with('error', 'Proceso no encontrado');
+                }
+
+                // Si necesitas transformar relaciones (ejemplo: evidencias), lo haces aquí
+                if (isset($proceso['evidencias'])) {
+                    $proceso['detalles'] = array_map(function ($evidencia) {
+                        return [
+                            'id' => $evidencia['id'],
+                            'comentario' => $evidencia['comentario'],
+                            'imagen' => $evidencia['imagen'],
+                        ];
+                    }, $proceso['evidencias']);
+                }
+
+                // Enviamos el array tal cual a la vista
+                return view('procesos.factura', compact('proceso'));
+            }
+
+            return redirect()->route('procesos.index')
+                ->with('error', 'No se pudo obtener el proceso');
+
+        } catch (\Exception $e) {
+            return redirect()->route('procesos.index')
+                ->with('error', 'Error de conexión: ' . $e->getMessage());
+        }
+    }
+
 }

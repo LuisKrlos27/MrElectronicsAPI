@@ -14,19 +14,23 @@ Route::get('/', function () {
     return view('Landing.Langing');
 });
 
+//rutas pra clientes
+Route::resource('clientes', ClienteController::class);
 
+//rutas para productos
+Route::resource('productos', ProductoController::class);
 Route::resource('marcas', MarcaController::class);
 Route::resource('modelos', ModeloController::class);
-Route::resource('productos', ProductoController::class);
+
+//rutas para procesos
 Route::resource('procesos', ProcesoController::class);
 Route::resource('evidencias', EvidenciaController::class);
-Route::resource('clientes', ClienteController::class);
+Route::post('procesos/{proceso}/evidencias', [EvidenciaController::class, 'store'])->name('evidencias.store');
+Route::get('procesos/{proceso}/factura', [ProcesoController::class, 'factura'])->name('procesos.factura');
+Route::get('procesos/{proceso}/VerFactura', [ProcesoController::class, 'VerFactura'])->name('procesos.VerFactura');
+
+//rutas para ventas
 Route::resource('ventas', VentaController::class);
 Route::resource('detalleVentas', DetalleVenta::class);
-
-Route::post('procesos/{proceso}/evidencias', [EvidenciaController::class, 'store'])->name('evidencias.store');
-
-Route::get('procesos/{proceso}/factura', [ProcesoController::class, 'factura'])->name('procesos.factura');
 Route::get('ventas/{venta}/factura', [VentaController::class, 'factura'])->name('ventas.factura');
-Route::get('procesos/{proceso}/imprimirFactura', [ProcesoController::class, 'imprimirFactura'])->name('procesos.imprimirFactura');
 
