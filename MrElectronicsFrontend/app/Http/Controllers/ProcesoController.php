@@ -60,94 +60,51 @@ class ProcesoController extends Controller
 
         $url = env('URL_SERVER_API') . '/procesos';
 
-        //determinar que enviar para cada campo
         $data = [
-            'falla'=> $request->falla,
-            'descripcion'=> $request->descripcion,
-            'estado'=> $request->estado,
-
+            'falla' => $request->falla,
+            'descripcion' => $request->descripcion,
+            'estado' => $request->estado,
         ];
 
-        //logica para marca
+        // Lógica para marca, modelo, pulgada y cliente (sin cambios)
         if ($request->marca_id === 'nueva' && $request->filled('nueva_marca')) {
-            $data['marca'] = $request->nueva_marca; //enviar nombre de la nueva marca
+            $data['marca'] = $request->nueva_marca;
         } else {
-            $data['marca_id'] = (int)$request->marca_id; //enviar ID numerico
+            $data['marca_id'] = (int)$request->marca_id;
         }
 
-        //logica para modelo
         if ($request->modelo_id === 'nuevo' && $request->filled('nuevo_modelo')) {
-            $data['modelo'] = $request->nuevo_modelo; //enviar nombre del nuevo modelo
+            $data['modelo'] = $request->nuevo_modelo;
         } else {
-            $data['modelo_id'] = (int)$request->modelo_id; //enviar ID numerico
+            $data['modelo_id'] = (int)$request->modelo_id;
         }
 
-        //logica para pulgada
         if ($request->pulgada_id === 'nuevo' && $request->filled('nueva_pulgada')) {
-            $data['pulgada'] = $request->nueva_pulgada; //enviar medida de la nueva pulgada
+            $data['pulgada'] = $request->nueva_pulgada;
         } else {
-            $data['pulgada_id'] = (int)$request->pulgada_id; //enviar ID numerico
+            $data['pulgada_id'] = (int)$request->pulgada_id;
         }
 
-        //logica para cliente
         if ($request->cliente_id === 'nuevo' && $request->filled('nuevo_cliente_nombre')) {
             $data['cliente'] = $request->nuevo_cliente_nombre;
             $data['documento'] = $request->nuevo_cliente_documento;
             $data['telefono'] = $request->nuevo_cliente_telefono;
             $data['direccion'] = $request->nuevo_cliente_direccion;
         } else {
-            $data['cliente_id'] = (int)$request->cliente_id; //enviar nombre del nuevo cliente
+            $data['cliente_id'] = (int)$request->cliente_id;
         }
-        //DEBUG: ver que vamos a enviar
-        //Log::debug('📤 DATOS ENVIADOS A API:', $data);
 
         $response = Http::post($url, $data);
 
-        // if ($response->successful()) {
-        //     return redirect()->route('procesos.index')->with('success', $response->json()['message']);
-        // }
-
-        if ($response->successful()) {
-            $errorMessage = $response->json()['message'] ?? 'No se pudo guardar el proceso';
+        if (!$response->successful()) {
+            $errorMessage = $response->json()['message'] ?? 'Error al crear el proceso';
             return back()->withErrors(['error' => $errorMessage])->withInput();
         }
 
-        $procesoId = $response->json()['data']['id'] ?? null;
+        // Redirigir siempre al index después de éxito
+        return redirect()->route('procesos.index')
+            ->with('success', $response->json()['message'] ?? 'Proceso creado correctamente');
 
-        if($request->hasFile('imagenes') && $procesoId){
-            $imagenes = $request->file('imagenes');
-            $comentarios = $request->comentarios ?? [];
-
-            $http = Http::accept('application/json')->asMultipart();
-
-            // $requestPost = $http->asMultipart();
-
-            foreach ($imagenes as $index => $file) {
-
-                $http = $http->attach(
-                    "imagenes[$index]",
-                    file_get_contents($file->getRealPath()),
-                    $file->getClientOriginalName()
-                );
-            }
-
-            //comentarios como campos normales
-            foreach($comentarios as $index => $comentario){
-                $http = $http->field('comentarios[$index]', $comentario);
-
-            }
-
-            //hacaer la petion post final
-            $evidenciaResponse = $http->post(env('URL_SERVER_API') . "/procesos/{$procesoId}/evidencias");
-
-            if(!$evidenciaResponse->successful()){
-                $errorMessage = $evidenciaResponse->json()['message'] ?? 'No se pudo registrar la evidencia';
-                return back()->withErrors(['error' => $errorMessage])->withInput();
-            }
-            return redirect()->route('procesos.index')
-                ->with('success', $response->json()['message'] ?? 'Proceso registrado correctamente');
-
-        }
     }
 
 
